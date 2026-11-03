@@ -156,16 +156,18 @@ jobs:
           [ -n "$TAG" ] || { echo "::error::no tag to release"; exit 1; }
           # "Survival LLM 离线生存助手 0.4.1-zh" from the tag, so both the manual run and a tag push look the same.
           case "$TAG" in v*) title="Survival LLM 离线生存助手 ${TAG#v}" ;; *) title="$TAG" ;; esac
-          # ${VAR:+...} rather than an array: macOS runners still ship bash 3.2, where "${arr[@]}" is unbound under -u.
-          prerelease="${PRERELEASE:+--prerelease}"
+          # Compare the value explicitly: "$PRERELEASE" is the string "false" here, which is non-empty, so
+          # ${PRERELEASE:+--prerelease} would mark every release a pre-release. Pass the flag either way so an
+          # existing release can be flipped back to a normal one.
+          if [ "${PRERELEASE:-false}" = "true" ]; then pre="--prerelease=true"; else pre="--prerelease=false"; fi
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "release $TAG exists: replacing its assets and notes"
             gh release upload "$TAG" dist/Survival-LLM-mac.zip dist/Survival-LLM-windows.zip --clobber
-            gh release edit "$TAG" --title "$title" --notes-file release-notes.md $prerelease
+            gh release edit "$TAG" --title "$title" --notes-file release-notes.md "$pre"
           else
             gh release create "$TAG" dist/Survival-LLM-mac.zip dist/Survival-LLM-windows.zip \
-              --target "$GITHUB_SHA" --title "$title" --notes-file release-notes.md $prerelease
+              --target "$GITHUB_SHA" --title "$title" --notes-file release-notes.md "$pre"
           fi
           gh release view "$TAG" --json url,tagName,assets \
             --jq '"released " + .tagName + "  " + .url + "\n" + (.assets[] | "  " + .name + "  " + (.size|tostring) + " bytes")'
