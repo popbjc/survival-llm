@@ -99,7 +99,27 @@ jobs:
           # The version baked into the app decides whether it offers itself an update later.
           unzip -p dist/Survival-LLM-mac.zip 'Survival LLM.app/Contents/Resources/app/version.txt' | grep -qx "$version" \
             || { echo "::error::version.txt inside the app does not match packaging/VERSION ($version)"; exit 1; }
+
+          # The 简体中文 build must actually carry the Chinese UI and prompts, and must still carry the English
+          # machine labels the app matches on (Sources: is what the citation check and six tests key off).
+          unzip -p dist/Survival-LLM-mac.zip 'Survival LLM.app/Contents/Resources/app/app/static/index.html' \
+            | grep -q 'lang="zh-CN"' || { echo "::error::the Mac app's page is not marked zh-CN"; exit 1; }
+          unzip -p dist/Survival-LLM-windows.zip 'Survival LLM/app/app/static/index.html' \
+            | grep -q 'lang="zh-CN"' || { echo "::error::the Windows app's page is not marked zh-CN"; exit 1; }
+          for zip in dist/Survival-LLM-mac.zip dist/Survival-LLM-windows.zip; do
+            case "$zip" in
+              *mac*) inner='Survival LLM.app/Contents/Resources/app' ;;
+              *)     inner='Survival LLM/app' ;;
+            esac
+            unzip -p "$zip" "$inner/core.py" | grep -q '你在为 Survival LLM' \
+              || { echo "::error::$zip does not carry the Chinese AI prompts"; exit 1; }
+            unzip -p "$zip" "$inner/core.py" | grep -q 'Sources:' \
+              || { echo "::error::$zip lost the English 'Sources:' label the citation check needs"; exit 1; }
+            unzip -p "$zip" "$inner/app/server.py" | grep -q '知识库' \
+              || { echo "::error::$zip does not carry the Chinese server text"; exit 1; }
+          done
           echo "version: $version"
+          echo "the apps carry the Chinese UI, prompts and server text, and keep the English machine labels"
 
       - name: Write the release notes
         env:
