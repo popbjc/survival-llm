@@ -1,0 +1,171 @@
+name: Release
+
+# Builds the two downloadable apps the same way packaging/build.sh does on a developer's Mac, then publishes
+# them as a GitHub release: dist/Survival-LLM-mac.zip (Apple Silicon, with Ollama inside) and
+# dist/Survival-LLM-windows.zip (64-bit Windows, which downloads Ollama on first use).
+#
+# One arm64 macOS runner does both: the Windows folder is cross-assembled from the Mac's portable Python
+# (pip --platform win_amd64), exactly as build.sh does it, so no Windows runner is needed.
+#
+# Run it from the Actions tab ("Run workflow") or by pushing a tag: git push origin v0.4.1-zh
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag and title (e.g. v0.4.1-zh)'
+        required: true
+        default: 'v0.4.1-zh'
+      notes:
+        description: 'One-line summary shown at the top of the release'
+        required: false
+        default: '基于 0.4.1 的简体中文版'
+      prerelease:
+        description: 'Mark this as a pre-release'
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'v*'
+
+# A release build takes tens of minutes and downloads a few hundred MB; never run two at once.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # build.sh compiles with -arch arm64 and targets macOS 14+, so this must be an Apple Silicon runner.
+    runs-on: macos-14
+    timeout-minutes: 120
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Check the runner is Apple Silicon
+        run: |
+          echo "arch: $(uname -m)  macOS: $(sw_vers -productVersion)"
+          if [ "$(uname -m)" != "arm64" ]; then
+            echo "::error::build.sh targets arm64 (-arch arm64, -mmacosx-version-min=14.0); this runner is $(uname -m)."
+            exit 1
+          fi
+          for tool in clang codesign ditto zip; do
+            command -v "$tool" >/dev/null || { echo "::error::missing build tool: $tool"; exit 1; }
+          done
+
+      # packaging/cache holds the pinned python-build-standalone tarballs, the Ollama release and Ollama's
+      # checksums. Keyed on build.sh so the cache is dropped whenever one of those pins changes.
+      - name: Cache the pinned downloads
+        uses: actions/cache@v4
+        with:
+          path: packaging/cache
+          key: packaging-cache-${{ runner.os }}-${{ hashFiles('packaging/build.sh') }}
+          restore-keys: |
+            packaging-cache-${{ runner.os }}-
+
+      - name: Build both apps
+        env:
+          # build.sh fetches from GitHub releases; a token lifts the anonymous rate limit on those calls.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash packaging/build.sh all
+
+      - name: Check what was built
+        run: |
+          set -euo pipefail
+          version="$(cat packaging/VERSION)"
+          for zip in dist/Survival-LLM-mac.zip dist/Survival-LLM-windows.zip; do
+            [ -s "$zip" ] || { echo "::error::$zip was not built"; exit 1; }
+            echo "$zip: $(du -h "$zip" | cut -f1)"
+          done
+
+          # The Mac bundle must contain a runnable executable, the bundled engine and the app's own code.
+          unzip -l dist/Survival-LLM-mac.zip | grep -q 'Survival LLM.app/Contents/MacOS/Survival LLM' \
+            || { echo "::error::the Mac zip has no executable"; exit 1; }
+          unzip -l dist/Survival-LLM-mac.zip | grep -q 'Resources/ollama/' \
+            || { echo "::error::the Mac zip has no bundled Ollama"; exit 1; }
+
+          # The Windows folder must have its launcher, the app and the engine manifest it downloads from.
+          unzip -l dist/Survival-LLM-windows.zip | grep -q 'Survival LLM/Survival LLM.bat' \
+            || { echo "::error::the Windows zip has no launcher"; exit 1; }
+          unzip -l dist/Survival-LLM-windows.zip | grep -q 'Survival LLM/app/app/server.py' \
+            || { echo "::error::the Windows zip has no app"; exit 1; }
+          unzip -l dist/Survival-LLM-windows.zip | grep -q 'Survival LLM/app/engine.json' \
+            || { echo "::error::the Windows zip has no engine.json"; exit 1; }
+
+          # The version baked into the app decides whether it offers itself an update later.
+          unzip -p dist/Survival-LLM-mac.zip 'Survival LLM.app/Contents/Resources/app/version.txt' | grep -qx "$version" \
+            || { echo "::error::version.txt inside the app does not match packaging/VERSION ($version)"; exit 1; }
+          echo "version: $version"
+
+      - name: Write the release notes
+        env:
+          NOTES: ${{ inputs.notes }}
+        run: |
+          set -euo pipefail
+          # A tag push carries no inputs, so fall back to a summary built from packaging/VERSION.
+          notes="${NOTES:-基于 $(cat packaging/VERSION) 的简体中文版}"
+          {
+            echo "$notes"
+            echo
+            echo "**Survival LLM 离线生存助手 $(cat packaging/VERSION)** — 简体中文版。"
+            echo
+            echo "- \`Survival-LLM-mac.zip\`：macOS 14 Sonoma 或更新，Apple Silicon，内置 AI 引擎（Ollama）"
+            echo "- \`Survival-LLM-windows.zip\`：Windows 10/11 64 位，首次使用时会下载 AI 引擎"
+            echo
+            echo "首次启动会引导你选择 AI 模型并下载离线知识库（模型 6–80 GB，知识库 1.3–8.8 GB，视选择而定）。"
+            echo "安装与卸载步骤见仓库里的 README。"
+            echo
+            echo "本版说明：界面、AI 指令与文档为简体中文；\`Sources:\` 等被程序校验的机器标签，以及"
+            echo "\`SOURCES.md\`、\`LICENSE\`（各来源的许可原文）保留英文。知识库语料本身是英文，"
+            echo "用中文提问时模型会以英文关键词检索，答案用中文给出。"
+            echo
+            echo "### 校验值"
+            echo
+            echo '```'
+            for zip in dist/*.zip; do
+              echo "$(shasum -a 256 "$zip" | cut -d' ' -f1)  $(basename "$zip")  $(stat -f%z "$zip") bytes"
+            done
+            echo '```'
+            echo
+            echo "构建环境：\`$(uname -m)\` / macOS $(sw_vers -productVersion) / 提交 \`${GITHUB_SHA:0:8}\`"
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Upload the build for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: Survival-LLM-zips
+          path: |
+            dist/Survival-LLM-mac.zip
+            dist/Survival-LLM-windows.zip
+            release-notes.md
+          retention-days: 14
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.version || github.ref_name }}
+          NOTES: ${{ inputs.notes }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+          [ -n "$TAG" ] || { echo "::error::no tag to release"; exit 1; }
+          # "Survival LLM 离线生存助手 0.4.1-zh" from the tag, so both the manual run and a tag push look the same.
+          case "$TAG" in v*) title="Survival LLM 离线生存助手 ${TAG#v}" ;; *) title="$TAG" ;; esac
+          # ${VAR:+...} rather than an array: macOS runners still ship bash 3.2, where "${arr[@]}" is unbound under -u.
+          prerelease="${PRERELEASE:+--prerelease}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "release $TAG exists: replacing its assets and notes"
+            gh release upload "$TAG" dist/Survival-LLM-mac.zip dist/Survival-LLM-windows.zip --clobber
+            gh release edit "$TAG" --title "$title" --notes-file release-notes.md $prerelease
+          else
+            gh release create "$TAG" dist/Survival-LLM-mac.zip dist/Survival-LLM-windows.zip \
+              --target "$GITHUB_SHA" --title "$title" --notes-file release-notes.md $prerelease
+          fi
+          gh release view "$TAG" --json url,tagName,assets \
+            --jq '"released " + .tagName + "  " + .url + "\n" + (.assets[] | "  " + .name + "  " + (.size|tostring) + " bytes")'
