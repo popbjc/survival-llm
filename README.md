@@ -1,206 +1,160 @@
-# Survival LLM
+# Survival LLM 离线生存助手
 
-A free AI assistant and survival library that runs entirely on your own computer and works with no
-internet. Ask it how to keep food safe in a blackout, treat a burn or purify water: it searches an
-offline library of medical, emergency, how-to and encyclopedia articles, answers from what it finds,
-and shows you the exact passage each answer came from.
+一个免费的 AI 助手加生存知识库，完全跑在你自己的电脑上，不需要联网。问它停电时怎么让食物不变质、烧伤怎么处理、水怎么净化：它会搜索一个离线的医学、急救、操作与百科知识库，用它查到的内容作答，并给你看每个答案出自哪一段原文。
 
-- **Offline and private.** The AI model and the library live on your computer. Your questions never leave it, and once set up it works with the internet off.
-- **Shows its sources.** Every answer lists the articles it read; click one to read it yourself, cited passage highlighted, with its license. Ask "where did you get that?" and it opens the source.
-- **Shows its reasoning.** Show reasoning, under each answer, opens what the AI thought before it answered, step by step, with the searches and articles it read in between. It stays hidden until you click it. How much it reasons is up to you: Reasoning, next to Send, is a budget (Off, 1,000, 4,000 or 16,000 tokens, or no limit), and at the limit its thinking stops and it answers from what it has.
-- **Yours to adjust.** The Instructions button shows the instructions the AI gets before you ask anything (the app adds today's date, the names of your files and your Memory notes after them); edit them and Save to change how it answers (Reset brings back the original). The Length limit next to Send sets how long an answer may run, or turns the limit off.
-- **Add your own files.** Your files, at the top, takes PDFs, Word documents, EPUB ebooks, web pages and text files (drop them on the window or choose them), so the AI can search your generator's manual, your medicines list or your family's emergency plan along with the library. They stay on your computer, in the `Survival LLM Files` folder in your home folder; files you put in that folder, or change there, are picked up on their own. It can't read scans or photos of pages yet.
-- **Remembers you.** Tell it your daughter is allergic to penicillin or that you have a Honda generator, and it saves a short note so later chats know it too; each answer shows what it saved, with Undo. Memory, at the top, shows every note in one list you can edit, and a switch turns off the AI's saving (it still reads the notes you keep). The notes stay on your computer, in one plain text file with the app's settings.
-- **Updates itself.** Check for updates, at the bottom of the window, looks for a new version (it also looks once a day while it runs, by fetching one small file from the project's web page; nothing about you is sent). Update now downloads it, checks it, and restarts into it, keeping your models, library, files and settings. Newer libraries are offered there too.
-- **Built for emergencies.** About 1.5 million articles (500,000 in the smaller download): about 930,000 of Wikipedia's most-read articles, WikiMed, MedlinePlus, a UK medicines guide, WikEM, Ready.gov, CDC, U.S. military and FEMA survival and first-aid manuals, the USDA canning guide, risk references for estimating micromorts (life tables, U.S. death rates), wikiHow, iFixit, Appropedia, Energypedia and practical Q&A. See [SOURCES.md](SOURCES.md).
+> **本版本为简体中文版**（由社区汉化）。`Sources:` 等机器标签、工具名，以及 `SOURCES.md`（各来源的许可原文）保留英文。
 
-## Install
+- **离线、私密。** AI 模型和知识库都在你的电脑上。你的问题不会离开这台电脑；设置好之后，断网也能用。
+- **给出来源。** 每个答案都会列出它读过的文章；点一篇就能自己读，被引用的那一段会高亮，还附有许可协议。问它“你从哪知道的”，它会把来源打开给你。
+- **显示推理过程。** 显示推理过程在每个答案下面，点开会看到 AI 在回答前想了什么，一步一步，中间还有它做过的搜索和读过的文章。不点开就一直藏着。它想多久由你决定：发送旁边的“推理”是一个预算（关、1,000、4,000 或 16,000 token，或者不限制），到了上限它就停止思考，用现有的内容回答。
+- **随你调整。** “指令”按钮显示 AI 在你提问前收到的指令（应用会在后面加上今天的日期、你的文件清单和你的记忆条目）；改完点保存就能改变它的回答方式（恢复默认可以拿回原始版本）。发送旁边的“长度上限”决定一个回答最多能写多长，也可以关掉上限。
+- **加上你自己的文件。** 顶部的“我的文件”接受 PDF、Word 文档、EPUB 电子书、网页和纯文本文件（把它们拖到窗口上，或者选择文件），这样 AI 可以一边搜知识库，一边搜你发电机的说明书、你的用药清单或你家的应急预案。它们只留在你的电脑上，放在主文件夹里的 `Survival LLM Files` 文件夹中；你放进那个文件夹或在那里改动的文件会被自动识别。它现在还读不了扫描件和照片。
+- **记得住你。** 告诉它你女儿对青霉素过敏，或者你有一台本田发电机，它会存一条简短条目，之后的对话里也知道；每个答案都会显示它存了什么，可以撤销。顶部的“记忆”把每条条目列在一起，你可以编辑；还有一个开关可以关掉 AI 自己写入（你写的条目它照样会读）。这些条目留在你的电脑上，一个纯文本文件，和应用设置放在一起。
+- **自己更新。** 窗口底部的“检查更新”会找新版本（运行期间每天也会查一次，只从项目网页取一个小文件，不会发送任何关于你的信息）。“立即更新”会下载、校验并重启到新版本，保留你的模型、知识库、文件和设置。有新知识库时也会在那里提示。
+- **为紧急情况而做。** 约 150 万篇文章（较小那个下载里是 50 万篇）：约 93 万篇维基百科上最常读的条目、WikiMed、MedlinePlus、英国用药指南、WikEM、Ready.gov、CDC、美军与 FEMA 的生存和急救手册、USDA 的罐藏指南、用来估算微死亡（micromort）的风险参考资料（寿命表、美国死亡率）、wikiHow、iFixit、Appropedia、Energypedia，以及实用问答。见 [SOURCES.md](SOURCES.md)。
 
-Do this while you have internet. After that, it needs none. Setup takes 20 minutes to about 2½ hours, depending on
-your computer and internet speed (the biggest AI model is 80 GB); you only click for about 5 minutes.
+## 安装
 
-**Mac** (Apple Silicon, macOS 14 Sonoma or newer)
-1. Download `Survival-LLM-mac.zip` and double-click it to unzip. Move **Survival LLM** to Applications if you like.
-2. Double-click **Survival LLM**. The first time, macOS says it can't verify the app, because it isn't sold through
-   Apple. Click **Done**, open **System Settings > Privacy & Security**, scroll down to "Survival LLM was blocked",
-   click **Open Anyway**, and confirm with your password. You only do this once.
+请在能联网的时候做这一步。之后就完全不需要网络了。设置要 20 分钟到约 2 个半小时，取决于你的电脑和网速（最大的 AI 模型是 80 GB）；需要你动手点的部分大约 5 分钟。
 
-**Windows** (10 or 11, 64-bit)
-1. Download `Survival-LLM-windows.zip`, right-click it and choose **Extract All**. (Running it from inside the zip doesn't work.)
-2. Open the extracted **Survival LLM** folder and double-click **Survival LLM.bat**. If Windows says it protected
-   your PC, click **More info**, then **Run anyway**.
+**Mac**（Apple Silicon，macOS 14 Sonoma 或更新）
+1. 下载 `Survival-LLM-mac.zip`，双击解压。想的话可以把 **Survival LLM** 移到“应用程序”里。
+2. 双击 **Survival LLM**。第一次打开时 macOS 会说无法验证这个应用，因为它没有通过 Apple 销售。点 **Done**，打开**系统设置 > 隐私与安全性**，往下找到“Survival LLM was blocked”，点 **Open Anyway**（仍要打开），然后输入密码确认。这一步只做一次。
 
-**Then** the app opens in its own window and walks you through setup:
-1. **AI engine:** built into the Mac app. On Windows, one click downloads it (Ollama, 1.6 GB).
-2. **AI model:** it suggests the best one for your computer's memory (below) and downloads it.
-3. **Library:** "Everything" (8.8 GB download) or "Essentials" (1.3 GB, without Wikipedia and iFixit).
+**Windows**（10 或 11，64 位）
+1. 下载 `Survival-LLM-windows.zip`，右键选**全部解压缩**。（直接在压缩包里运行是不行的。）
+2. 打开解压出来的 **Survival LLM** 文件夹，双击 **Survival LLM.bat**。如果 Windows 说它保护了你的电脑，点 **More info**（更多信息），再点 **Run anyway**（仍要运行）。
 
-**Free disk space needed:** the model's size plus 5 GB, plus about 27 GB while the full library installs
-(21 GB once installed), or about 10 GB for Essentials (3 GB once installed).
+**然后**应用会在自己的窗口里打开，带你走一遍设置：
+1. **AI 引擎：** Mac 应用里自带。在 Windows 上点一下就会下载（Ollama，1.6 GB）。
+2. **AI 模型：** 它会推荐最适合你这台电脑内存的模型（见下），然后下载。
+3. **知识库：**“全量包”（下载 8.8 GB）或“必备包”（1.3 GB，不含维基百科和 iFixit）。
 
-## Uninstall
+**需要的可用磁盘空间：** 模型大小加 5 GB，装全量知识库时另外还要约 27 GB（装好之后占 21 GB），必备包约 10 GB（装好之后占 3 GB）。
 
-Delete the app, then these folders: the AI models, in `~/.ollama/models` (shared with any other Ollama on the
-computer, so keep it if you use Ollama elsewhere), and the library. The app's Library window (Search library, then
-Switch or move the library) shows where the library is: in `~/Survival LLM Library` if you installed it before 0.4, otherwise
-in the app's settings folder unless you moved it. Your own files are in `~/Survival LLM Files` unless you picked
-another folder; keep it if you want them. The app's own settings are in `~/Library/Application Support/Survival LLM`
-on a Mac, and in `%APPDATA%\Survival LLM` plus the AI engine and library in `%LOCALAPPDATA%\Survival LLM` on Windows.
+## 卸载
 
-## Which model your computer gets
+删掉应用，再删这几个文件夹：AI 模型在 `~/.ollama/models`（这台电脑上其他 Ollama 也共用，如果你在别处用 Ollama 就留着），还有知识库。应用的知识库窗口（搜索知识库，然后切换或移动知识库）会显示知识库在哪：如果你是在 0.4 之前装的，就在 `~/Survival LLM Library`；否则在应用的设置文件夹里，除非你移动过。你自己的文件在 `~/Survival LLM Files` 里，除非你选了别的文件夹；想留着就留着。应用自己的设置在 Mac 上位于 `~/Library/Application Support/Survival LLM`；在 Windows 上位于 `%APPDATA%\Survival LLM`，AI 引擎和知识库位于 `%LOCALAPPDATA%\Survival LLM`。
 
-The app checks your memory and suggests a model. More memory, smarter model.
+## 你的电脑会用哪个模型
 
-| Your computer | Model | Download |
+应用会检查你的内存，然后推荐一个模型。内存越大，模型越聪明。
+
+| 你的电脑 | 模型 | 下载大小 |
 |---|---|---|
-| Mac with 128 GB or more | NVIDIA Nemotron 3.5 Super (`nemotron-3.5-super:120b-a12b-nvfp4`) | 80 GB |
-| Mac with 32-96 GB | Qwen3.8 27B (`qwen3.8:27b-mlx`) | 18 GB |
-| Windows PC with 32 GB or more | NVIDIA Nemotron 3.5 Lightning (`nemotron-3.5-lightning:30b-a3b`) | 25 GB |
-| Mac or PC with 16-31 GB | IBM Granite 4.2 8B (`granite4.2:8b`) | 6 GB |
+| 128 GB 或更多的 Mac | NVIDIA Nemotron 3.5 Super（`nemotron-3.5-super:120b-a12b-nvfp4`） | 80 GB |
+| 32-96 GB 的 Mac | Qwen3.8 27B（`qwen3.8:27b-mlx`） | 18 GB |
+| 32 GB 或更多的 Windows 电脑 | NVIDIA Nemotron 3.5 Lightning（`nemotron-3.5-lightning:30b-a3b`） | 25 GB |
+| 16-31 GB 的 Mac 或 PC | IBM Granite 4.2 8B（`granite4.2:8b`） | 6 GB |
 
-Nemotron Super needs 128 GB because macOS lets the graphics side use only about three quarters of memory.
+Nemotron Super 需要 128 GB，因为 macOS 只让图形部分使用大约四分之三的内存。
 
-Gemma 4 E4B (`gemma4`, 10 GB) is offered as a faster option for 16 GB computers. Computers with 8 GB can
-still search the library; no model we tested was both small enough and safe enough to recommend for them.
+Gemma 4 E4B（`gemma4`，10 GB）作为 16 GB 电脑上更快的选项提供。8 GB 的电脑仍然可以搜索知识库；我们测试过的模型里，没有一个同时做到足够小又足够安全，可以推荐给它们。
 
-## How the models did
+## 各个模型的表现
 
-Each model answered 22 blackout and first-aid questions (food, generators, water, carbon monoxide,
-hypothermia, bleeding, burns, insulin, downed lines, fallout, botulism and more) using the full app: its
-prompt, tools and library search. Independent AI judges then graded every answer blind (model names hidden,
-order shuffled) against official guidance from USDA, CDC, FEMA, EPA, NHS, WHO and the Red Cross: one judge
-for accuracy, one for safety, and a skeptic who re-checked every answer flagged as harmful.
+每个模型用完整的应用（它的提示词、工具和知识库检索）回答了 22 个停电与急救问题（食物、发电机、水、一氧化碳、失温、出血、烧伤、胰岛素、倒下的电线、放射性沉降、肉毒中毒等）。然后由独立的 AI 评审盲评每一个答案（模型名隐藏、顺序打乱），对照 USDA、CDC、FEMA、EPA、NHS、WHO 和红十字会的官方指引：一位评审看准确性，一位看安全性，还有一位怀疑者复核每一个被标记为有害的答案。
 
-How these numbers were measured, plainly: the tests ran on an earlier build of the library, before Wikipedia
-was added, which also held some material that isn't in the public downloads (the Kiwix "zimgit" collections and
-MedlinePlus's licensed encyclopedia and drug pages; 1 to 10 answers per model read one of those). The app's
-instructions have also gained rules since: the carbon monoxide rule and "always give your best estimate". Treat
-the table as a comparison between models, not a guarantee for the version you download.
+这些数字是怎么测出来的，说清楚一点：测试跑在知识库的一个较早版本上，那时还没有加入维基百科，而且里面还包含一些不在公开下载里的材料（Kiwix 的 “zimgit” 合集，以及 MedlinePlus 有授权的百科与药物页面；每个模型有 1 到 10 个答案读到了其中之一）。应用的指令后来也加过规则：一氧化碳规则和“一定要给出你最好的估计”。请把这张表当作模型之间的比较，而不是对你下载的那个版本的保证。
 
-| Model | Accuracy | Main point right | Harmful answers | Seconds per answer* |
+| 模型 | 准确性 | 要点答对 | 有害答案 | 每个答案的秒数* |
 |---|---|---|---|---|
-| Nemotron 3.5 Super | 86% | 21 of 22 | 0 | 12 |
-| Qwen3.8 27B | 80% | 21 of 22 | 0 | 40 |
-| Nemotron 3.5 Lightning | 77% | 19 of 22 | 1 | 8 |
-| Qwen 3.6 (36B MoE) | 59% | 15 of 22 | 1 | 24 |
-| Granite 4.2 8B | 55% | 14 of 22 | 0 | 29 |
-| Granite 4.2 30B | 55% | 11 of 22 | 2 | 55 |
-| Gemma 4 E4B | 48% | 11 of 22 | 0 | 3 |
-| Granite 4.2 3B | 44% | 8 of 22 | 5 (2 could kill) | 12 |
+| Nemotron 3.5 Super | 86% | 22 个里 21 个 | 0 | 12 |
+| Qwen3.8 27B | 80% | 22 个里 21 个 | 0 | 40 |
+| Nemotron 3.5 Lightning | 77% | 22 个里 19 个 | 1 | 8 |
+| Qwen 3.6（36B MoE） | 59% | 22 个里 15 个 | 1 | 24 |
+| Granite 4.2 8B | 55% | 22 个里 14 个 | 0 | 29 |
+| Granite 4.2 30B | 55% | 22 个里 11 个 | 2 | 55 |
+| Gemma 4 E4B | 48% | 22 个里 11 个 | 0 | 3 |
+| Granite 4.2 3B | 44% | 22 个里 8 个 | 5（2 个可能致命） | 12 |
 
-\* On an M4 Max MacBook Pro (128 GB), Ollama 0.40.9. Qwen3.8 27B was tested as mlx-community's 4-bit build
-(`local-ai2` in `evals/results`); the app downloads Ollama's NVFP4 build of the same model. Nemotron Super appears
-there as `local-ai1` (the same model with the app's settings). Windows downloads a different file of Nemotron
-Lightning (Q4_K_M) than the Mac build tested here. Accuracy is the share of points on a 0-3 scale per answer; "harmful"
-means following it could hurt someone. Granite 4.2 3B, first planned for 8 GB computers, is not offered: it
-told people not to use a tourniquet on an arm and to stay 3 feet from a downed power line (the guidance is 35).
-Qwen 3.6 is not offered either: it got stuck repeating itself on two questions (once for 94 minutes),
-which is also why answers have a length limit (you can change it, or turn it off, next to Send).
+\* 在一台 M4 Max MacBook Pro（128 GB）上，Ollama 0.40.9。Qwen3.8 27B 测的是 mlx-community 的 4 位量化版（`evals/results` 里的 `local-ai2`）；应用下载的是同一个模型的 Ollama NVFP4 版本。Nemotron Super 在那里叫 `local-ai1`（同一个模型，用应用的设置）。Windows 下载的 Nemotron Lightning 文件和这里测的 Mac 版本不同（Q4_K_M）。准确性是每个答案在 0-3 分制上的得分占比；“有害”指照着做可能会伤到人。Granite 4.2 3B 原本计划给 8 GB 电脑用，现在不提供：它让人不要在上臂用止血带，还让人离倒下的电线保持 3 英尺（指引是 35 英尺）。Qwen 3.6 也不提供：它在两个问题上卡在自我重复里（有一次重复了 94 分钟），这也是回答有长度上限的原因（你可以在发送旁边改，或者关掉）。
 
-The tests found and fixed two problems for every model: some kept looking things up until they ran out of
-lookups and never answered (now they are told to answer from what they read), and several gave "if you
-must" exceptions for running cars and generators near the house (the prompt now rules those out).
-Reproduce with `evals/retrieval_eval.py`, `evals/make_judging_batches.py` and `evals/score_judging.py`;
-answers are in `evals/results/`, grades in `evals/judging/`.
+测试为每个模型发现并修好了两个问题：有的模型会一直查下去，把查询次数用完却始终不回答（现在会告诉它用读到的内容作答）；还有几个模型对在房子附近开汽车和发电机给出了“如果实在没办法”的例外（提示词现在明确禁止了）。
 
-**Made-up sources.** Each answer ends with the model's own "Sources:" line, and its instructions say the app shows
-every article it opened. Models name sources they never saw anyway. In a separate test of 14 questions
-(`evals/citation_check.py`, October 24 2026), these answers named a source the model had neither opened nor seen in
-its search results: Nemotron Super 6 (mostly answering from memory and naming Ready.gov or the CDC), Lightning 3,
-Gemma 3, Granite 2 and Qwen3.8 27B 1. So the app checks that line against what the model opened or saw, and replaces
-a line that names anything else with the list of articles it actually read.
+重现方式见 `evals/retrieval_eval.py`、`evals/make_judging_batches.py` 和 `evals/score_judging.py`；答案在 `evals/results/`，评分在 `evals/judging/`。注意：`evals/` 里的评测脚本是按英文版写的，中文版不适用。
 
-## How it works
+**编造来源。** 每个答案结尾都有一行模型自己写的 “Sources:”，它的指令里也说明了应用会显示它打开过的每一篇文章。模型仍然会写它根本没见过的来源。在另一个 14 个问题的测试里（`evals/citation_check.py`，2026 年 10 月 24 日），这些答案写了一个模型既没打开、也没在搜索结果里见过的来源：Nemotron Super 6 次（多数是凭记忆回答，然后写 Ready.gov 或 CDC），Lightning 3 次，Gemma 3 次，Granite 2 次，Qwen3.8 27B 1 次。所以应用会拿这一行和模型实际打开或看到的内容对照，只要写了别的东西，就把它替换成它真正读过的文章清单。
+
+## 工作原理
 
 ```
-your question ─► local model (Ollama) ─► search_library ─► SQLite full-text index ─► passages
-                        ▲                read_article  ─► plain-text library files
-                        └──── answer with "Sources:" ◄──┘   show_article ─► opens it on screen
+你的问题 ─► 本地模型（Ollama）─► search_library ─► SQLite 全文索引 ─► 段落
+                    ▲            read_article  ─► 纯文本知识库文件
+                    └──── 带 "Sources:" 的回答 ◄──┘   show_article ─► 在屏幕上打开它
 ```
 
-- `app/server.py` serves the chat page on `127.0.0.1` only and runs each turn through `core.py`.
-- `core.py` streams the model's answer and runs its library tools: `search_library`, `read_article`, `show_article`.
-- `library/search.py` searches `index.sqlite` (FTS5, BM25 ranking over ~1,500-character passages, official sources ranked higher) and reads the plain-text Markdown shards.
-- `memory.py` keeps the AI's notes about the person (`survival-llm-memory.txt`, with the app's settings) and, while the person allows it, `core.py` gives the model one short extra turn after answers to messages about the person or their family, to say what to remember, change or forget (a JSON reply the app checks and applies). The notes, today's date and the names of the person's files are added after the instructions when a chat starts.
-- `library/myfiles.py` reads the person's own files into a small index of their own (kept with the app's settings) and searches it together with the library.
-- Everything except Ollama, the app window (pywebview), PDF reading (pypdf) and checking web certificates with the system's own store (truststore) is the Python standard library.
+- `app/server.py` 只在 `127.0.0.1` 上提供聊天页面，并把每一轮交给 `core.py` 处理。
+- `core.py` 流式转发模型的回答，并执行它的知识库工具：`search_library`、`read_article`、`show_article`。
+- `library/search.py` 搜索 `index.sqlite`（FTS5，对约 1,500 字符的段落做 BM25 排序，官方来源排在前面），并读取纯文本的 Markdown 分片。
+- `memory.py` 保存 AI 关于这个人的条目（`survival-llm-memory.txt`，和应用设置放在一起）；在对方允许的情况下，`core.py` 会在回答之后，针对提到本人或家人的消息，给模型一次简短的额外回合，让它说出要记住、修改或忘记什么（一个 JSON 回复，应用会校验并执行）。对话开始时，条目、今天的日期和对方文件的名字会加在指令之后。
+- `library/myfiles.py` 把对方自己的文件读进一个独立的小索引（和应用设置放在一起），并和知识库一起搜索。
+- 除了 Ollama、应用窗口（pywebview）、PDF 读取（pypdf）和用系统自己的证书库校验网站证书（truststore），其余都用 Python 标准库。
 
-## Run from source
+## 从源码运行
 
 ```bash
-python3 app/server.py          # the app in its own window (needs `pip install pywebview pypdf truststore`; else it uses your browser)
-python3 app/server.py --browser                     # in your web browser instead
-python3 chat.py "How long is fridge food safe in a blackout?"   # terminal; --model NAME picks a model
+python3 app/server.py          # 在自己的窗口里跑应用（需要 pip install pywebview pypdf truststore，否则用浏览器）
+python3 app/server.py --browser                     # 改用浏览器
+python3 chat.py "停电时冰箱里的食物能放多久？"   # 终端；--model NAME 指定模型
 ```
 
-The library is looked up at `$SURVIVAL_LLM_LIBRARY`, then the folder picked in the app (`library_dir` in its
-`settings.json`), then `~/Survival LLM Library`, then `library.noindex/` next to the code; a new one goes in the app's
-settings folder (`Library.noindex` on a Mac, `%LOCALAPPDATA%\Survival LLM\Library` on Windows).
-Without a built-in engine, the app uses an Ollama you have installed (`ollama serve`).
+知识库的查找顺序是 `$SURVIVAL_LLM_LIBRARY`、应用里选的文件夹（它 `settings.json` 里的 `library_dir`）、`~/Survival LLM Library`，最后是代码旁边的 `library.noindex/`；新建的知识库放在应用的设置文件夹里（Mac 上是 `Library.noindex`，Windows 上是 `%LOCALAPPDATA%\Survival LLM\Library`）。
+没有自带引擎时，应用会用你已安装的 Ollama（`ollama serve`）。
 
-`python3 tests/run_all.py` checks memory and the handling of what models write (forget requests, notes about different
-people, Sources lines), with a stand-in for the model: no Ollama or library needed. Run it after changing `memory.py` or
-`core.py`, and `evals/memory_eval.py --step MODEL ...` to see how real models do.
+`python3 tests/run_all.py` 用替身代替模型，检查记忆以及对模型输出的处理（忘记请求、关于不同人的条目、Sources 行）：不需要 Ollama，也不需要知识库。改动 `memory.py` 或 `core.py` 之后跑一遍；想看真实模型的表现，用 `evals/memory_eval.py --step MODEL ...`。
 
-## Try changes as the Mac app
+## 以 Mac 应用的方式试用改动
 
 ```bash
-bin/dev              # "Survival LLM Dev": the Mac app running the code in this folder (restarts it if it's open)
-bin/dev --fresh      # the same, as a brand-new person sees it: no library, memory, files or settings
-bin/dev --release    # build the Mac app exactly as it ships (packaging/build.sh mac) and run that build
-bin/dev stop         # quit it; bin/dev reset deletes its settings, memory and files; bin/dev log follows its log
+bin/dev              # “Survival LLM Dev”：用这个文件夹里的代码跑 Mac 应用（已打开的话会重启它）
+bin/dev --fresh      # 同上，但像一个全新用户看到的样子：没有知识库、记忆、文件和设置
+bin/dev --release    # 完全按发布的样子构建 Mac 应用（packaging/build.sh mac）并运行那个构建
+bin/dev stop         # 退出；bin/dev reset 删掉它的设置、记忆和文件；bin/dev log 跟随它的日志
 ```
 
-Survival LLM Dev is built once into `~/Applications` (`--rebuild` builds it again) with the same Python, pywebview and
-Ollama as the real app, but its code is a link to this folder, so every start runs the code as it is then; Spotlight
-opens it too. It keeps its own settings, memory and files in `~/Library/Application Support/Survival LLM Dev`, so an
-installed Survival LLM is left alone, and it shares the library and the AI models. A Dev badge and the line at the
-bottom of the window name the branch and commit it runs, and it never updates itself. Its log is
-`~/Library/Logs/Survival LLM Dev.log`.
+Survival LLM Dev 会一次性构建到 `~/Applications`（`--rebuild` 会重新构建），用的 Python、pywebview 和 Ollama 与正式应用相同，但它的代码是指向这个文件夹的链接，所以每次启动跑的都是当时最新的代码；Spotlight 也能打开它。它把自己的设置、记忆和文件留在 `~/Library/Application Support/Survival LLM Dev`，不会影响已安装的 Survival LLM，并且共用知识库和 AI 模型。窗口顶部的 Dev 徽标和底部那行会写明它跑的分支和提交，而且它从不自动更新。它的日志在 `~/Library/Logs/Survival LLM Dev.log`。
 
-## Build the library
+## 构建知识库
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install libzim lxml trafilatura
-python3 library/fetch_zims.py        # Kiwix ZIM sources (about 50 GB, temporary)
-python3 library/fetch_manuals.py     # U.S. government, IFRC and WHO manuals
-.venv/bin/python library/fetch_risk.py   # risk references (death-rate statistics, micromort articles)
+python3 library/fetch_zims.py        # Kiwix ZIM 来源（约 50 GB，临时）
+python3 library/fetch_manuals.py     # 美国政府、IFRC 和 WHO 的手册
+.venv/bin/python library/fetch_risk.py   # 风险参考资料（死亡率统计、微死亡文章）
 curl -L -o library.noindex/raw/wikihowAll.csv \
-  https://huggingface.co/datasets/Lajvi/wikihowAll/resolve/main/wikihowAll.csv   # wikiHow (620 MB)
-.venv/bin/python library/build_library.py      # plain text + index in library.noindex/
+  https://huggingface.co/datasets/Lajvi/wikihowAll/resolve/main/wikihowAll.csv   # wikiHow（620 MB）
+.venv/bin/python library/build_library.py      # 在 library.noindex/ 里生成纯文本和索引
 ```
 
-`build_library.py` is incremental (finished sources are skipped) and `--rebuild KEY ...` redoes sources.
-It needs `pdftotext` (poppler) for the PDF manuals.
+`build_library.py` 是增量的（做完的来源会跳过），`--rebuild KEY ...` 会重做指定的来源。
+它处理 PDF 手册时需要 `pdftotext`（poppler）。
 
-**A default build is for your own use only:** it includes material that may not be shared (see SOURCES.md).
-To build the shareable downloads:
+**默认构建只供你自己使用：** 它包含一些不能分享的材料（见 SOURCES.md）。要构建可以分享的下载包：
 
 ```bash
 LIBRARY_OUT=dist/library-full .venv/bin/python library/build_library.py --public
 LIBRARY_OUT=dist/library-lite .venv/bin/python library/build_library.py --lite
 python3 packaging/make_packs.py --base-url https://github.com/OWNER/survival-llm/releases/download/vX.Y.Z \
-  lite=dist/library-lite full=dist/library-full   # parts for the release + library-packs.json for docs/
+  lite=dist/library-lite full=dist/library-full   # 发布用的分片 + 给 docs/ 的 library-packs.json
 ```
 
-Packs carry a date (`--version`, default today); installed copies offer a pack with a newer date as an update.
+知识库包带一个日期（`--version`，默认是今天）；已安装的副本会把日期更新的包当作一次更新来提示。
 
-## Package the apps
+## 打包应用
 
 ```bash
-packaging/build.sh     # dist/Survival-LLM-mac.zip and dist/Survival-LLM-windows.zip (needs Xcode's command-line tools)
+packaging/build.sh     # dist/Survival-LLM-mac.zip 和 dist/Survival-LLM-windows.zip（需要 Xcode 命令行工具）
 gh release create "v$(cat packaging/VERSION)" dist/Survival-LLM-mac.zip dist/Survival-LLM-windows.zip
-python3 packaging/make_update.py "What's new" "..."   # writes docs/update.json; publish docs/ afterwards
+python3 packaging/make_update.py "新版本说明" "..."   # 写出 docs/update.json；之后发布 docs/
 ```
 
-Set the version in `packaging/VERSION` first. Installed copies read `docs/update.json` from the project's web page,
-download the zip for their system, check its size and SHA-256, and replace themselves with it.
+先在 `packaging/VERSION` 里设定版本号。已安装的副本会从项目网页读取 `docs/update.json`，下载对应系统的压缩包，校验大小和 SHA-256，然后用它替换自己。
 
-The Mac app bundles a portable Python, pywebview for its window, and Ollama. The Windows app bundles Python and
-pywebview and downloads Ollama on first use (it is 1.6 GB with its graphics-card libraries).
+Mac 应用打包了一个便携版 Python、用于窗口的 pywebview 和 Ollama。Windows 应用打包了 Python 和 pywebview，并在首次使用时下载 Ollama（加上它的显卡库是 1.6 GB）。
 
-## License
+## 许可
 
-Code: MIT ([LICENSE](LICENSE)). Library content keeps the license of its source ([SOURCES.md](SOURCES.md)).
+代码：MIT（[LICENSE](LICENSE)）。知识库内容保留其来源的许可（[SOURCES.md](SOURCES.md)）。
 
-AI models make mistakes. Every answer shows its sources so you can check.
+AI 模型会出错。每个答案都会显示来源，方便你核对。

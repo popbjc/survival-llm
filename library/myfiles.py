@@ -19,11 +19,11 @@ from library.passages import split_passages
 from library.search import Library, query_words
 
 KEY = "my-files"
-LABEL = "Your files"
+LABEL = "我的文件"
 ID_OFFSET = 1_000_000_000  # their passages get ids above the library's, so one id names one passage
 KINDS = {".pdf": "PDF", ".docx": "Word", ".odt": "OpenDocument", ".epub": "EPUB", ".html": "web page",
          ".htm": "web page", ".txt": "text", ".md": "text", ".markdown": "text", ".csv": "text"}
-CANT_READ = "Survival LLM can't read this kind of file. It reads PDF, Word, EPUB, web pages and text files."
+CANT_READ = "Survival LLM 读不了这种文件。它能读 PDF、Word、EPUB、网页和纯文本文件。"
 MAX_TEXT = 50_000_000  # characters kept from one file (a 1,000-page book is about 3 million)
 IGNORED = re.compile(r"^(\.|~\$)|^(desktop\.ini|thumbs\.db|icon\r)$|\.(part|crdownload|download|tmp)$", re.I)
 
@@ -90,7 +90,7 @@ class Combined:
         return self.main.stats() if self.main else (0, 0)
 
     def labels(self):
-        return ([LABEL + " (documents the person added)"] if self.mine else []) + (self.main.labels() if self.main else [])
+        return ([LABEL + "（对方自己添加的文件）"] if self.mine else []) + (self.main.labels() if self.main else [])
 
     def search(self, query, topic=None, limit=8):
         """Their files first when a passage has most of the query's words, then the library, then their weaker matches.
@@ -263,7 +263,7 @@ def _index(db, folder, name, size, mtime):
     except Unreadable as exc:
         status, error = "unreadable", str(exc)
     except Exception:  # a damaged or unusual file: say so rather than stop reading the others
-        status, error = "unreadable", "Couldn't read this file. It may be damaged, or saved in a way Survival LLM doesn't understand."
+        status, error = "unreadable", "这个文件读不了。它可能损坏了，或者保存的方式 Survival LLM 不认识。"
     db.execute("INSERT OR REPLACE INTO items(name, size, mtime, doc_id, status, error, title, passages, added) "
                "VALUES(?,?,?,?,?,?,?,?,?)", (name, size, mtime, doc_id, status, error, title, count, added))
 
@@ -305,7 +305,7 @@ def extract(path):
                    ".html": _html_file, ".htm": _html_file}.get(ext, _plain)(path)
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
     if not text:
-        raise Unreadable("There's no text in this file.")
+        raise Unreadable("这个文件里没有文字。")
     if not (title or "").strip():  # no title of its own: a short first line that isn't a sentence, or the file name
         first = text.split("\n\n", 1)[0].lstrip("#").strip()
         title = first if len(first) <= 80 and "\n" not in first and not first.endswith(".") else ""
@@ -318,7 +318,7 @@ def _pdf(path):
     try:
         from pypdf import PdfReader
     except ImportError:
-        raise Unreadable("Reading PDFs needs pypdf, which this copy of Survival LLM is missing.") from None
+        raise Unreadable("读取 PDF 需要 pypdf，而这份 Survival LLM 里没有带上它。") from None
     reader = PdfReader(path)
     if reader.is_encrypted:
         try:
@@ -326,8 +326,8 @@ def _pdf(path):
         except Exception:
             ok = 0
         if not ok:
-            raise Unreadable("This PDF is protected, so Survival LLM can't open it. Open it, print it to a new PDF "
-                             "(Print, then Save as PDF), and add that copy.")
+            raise Unreadable("这个 PDF 有保护，Survival LLM 打不开。请打开它，再打印成一个新的 PDF"
+                             "（打印，然后选“另存为 PDF”），然后添加那份副本。")
     pages = []
     for page in reader.pages:
         try:
@@ -336,8 +336,7 @@ def _pdf(path):
             pages.append("")
     text = "\n\n".join(p for p in pages if p)
     if len(text) < 40:
-        raise Unreadable("This PDF is pictures of pages (a scan or photo) with no text in it. "
-                         "Survival LLM can't read those yet.")
+        raise Unreadable("这个 PDF 是页面的图片（扫描件或照片），里面没有文字。Survival LLM 现在还读不了这种文件。")
     title = ""
     try:
         title = str((reader.metadata or {}).get("/Title") or "")
@@ -436,7 +435,7 @@ def _epub(path):
     with zipfile.ZipFile(path) as z:
         names = set(z.namelist())
         if "META-INF/encryption.xml" in names and re.search(rb"\.x?html?\b", z.read("META-INF/encryption.xml")):
-            raise Unreadable("This ebook is copy-protected, so Survival LLM can't read it.")
+            raise Unreadable("这个电子书有版权保护，Survival LLM 打不开。")
         container = ET.fromstring(z.read("META-INF/container.xml"))
         root = container.find(".//{urn:oasis:names:tc:opendocument:xmlns:container}rootfile").get("full-path")
         opf = ET.fromstring(z.read(root))

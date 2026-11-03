@@ -25,7 +25,7 @@ REPLY, SCRIPT = [""], []
 
 
 def fake_stream(model, messages, tools, think, options):
-    if "Survival LLM, an offline assistant app" in messages[-1]["content"]:
+    if "记录关于这个人的简短条目" in messages[-1]["content"]:
         yield {"message": {"content": REPLY[0]}}
     elif SCRIPT:
         step = SCRIPT.pop(0)

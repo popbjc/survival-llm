@@ -23,10 +23,10 @@ def open_article(library, passage_id):
     doc = library.document(passage_id)
     if not doc:
         return
-    lines = [f"# {doc['title']}", f"Source: {doc['source']}" + (f" | {doc['url']}" if doc["url"] else ""), ""]
+    lines = [f"# {doc['title']}", f"来源：{doc['source']}" + (f" | {doc['url']}" if doc["url"] else ""), ""]
     for part in doc["parts"]:
         if part["id"] == passage_id:
-            lines += ["", ">>> THE PASSAGE THE ANSWER CAME FROM <<<", ""]
+            lines += ["", ">>> 答案就来自这一段 <<<", ""]
         lines.append(part["text"])
         lines.append("")
     path = os.path.join(tempfile.gettempdir(), f"survival-llm-article-{doc['doc_id']}.md")
@@ -38,7 +38,7 @@ def open_article(library, passage_id):
         os.startfile(path)
     else:
         subprocess.run(["xdg-open", path])
-    print(f"{DIM}  · opened: {doc['title']} ({doc['source']}){RESET}")
+    print(f"{DIM}  · 已打开：{doc['title']}（{doc['source']}）{RESET}")
 
 
 def run_turn(model, library, messages, level, caps, length="normal"):
@@ -54,27 +54,27 @@ def run_turn(model, library, messages, level, caps, length="normal"):
             thinking = thinking and kind == "thinking"
         if kind == "thinking":
             if not thinking and ev["text"].strip():
-                print(f"{DIM}  · thinking{'' if thoughts else ' (/reasoning shows it)'}{RESET}", flush=True)
+                print(f"{DIM}  · 思考{'' if thoughts else '（用 /reasoning 查看）'}{RESET}", flush=True)
                 reasoning.append("")
                 thinking, thoughts = True, thoughts + 1
             if thinking:
                 reasoning[-1] += ev["text"]
         elif kind == "search":
             topic = f" [{ev['topic']}]" if ev["topic"] != "any" else ""
-            print(f"{DIM}  · searching: {ev['query']}{topic}{RESET}", flush=True)
-            reasoning.append(f"· searching: {ev['query']}{topic}")
+            print(f"{DIM}  · 搜索：{ev['query']}{topic}{RESET}", flush=True)
+            reasoning.append(f"· 搜索：{ev['query']}{topic}")
         elif kind == "read":
-            print(f"{DIM}  · reading: {ev['title']} ({ev['source']}){RESET}", flush=True)
-            reasoning.append(f"· reading: {ev['title']} ({ev['source']})")
+            print(f"{DIM}  · 阅读：{ev['title']}（{ev['source']}）{RESET}", flush=True)
+            reasoning.append(f"· 阅读：{ev['title']}（{ev['source']}）")
         elif kind == "think_limit":
-            print(f"{DIM}  · its thinking reached the limit; answering from what it has{RESET}", flush=True)
-            reasoning.append("· thinking reached the limit")
+            print(f"{DIM}  · 思考达到上限，就用现有的内容回答{RESET}", flush=True)
+            reasoning.append("· 思考达到上限")
         elif kind == "retry":
-            print(f"{DIM}  · {'asked to search, as you asked' if ev.get('why') == 'search' else 'answering from the articles it found'}"
+            print(f"{DIM}  · {'按你的要求先搜索' if ev.get('why') == 'search' else '用找到的文章回答'}"
                   f"{RESET}", flush=True)
         elif kind == "show":
             open_article(library, ev["id"])
-            reasoning.append(f"· opened: {ev['title']} ({ev['source']})")
+            reasoning.append(f"· 已打开：{ev['title']}（{ev['source']}）")
         elif kind == "token":
             if fresh and not ev["text"].strip():
                 continue
@@ -83,12 +83,12 @@ def run_turn(model, library, messages, level, caps, length="normal"):
         elif kind == "done":
             sources = ev["sources"]
             speed = f" · {ev['tokens'] / ev['seconds']:.0f} tok/s" if ev["seconds"] else ""
-            note = " · /sources to see what it read" if sources else ""
+            note = " · 用 /sources 查看它读了什么" if sources else ""
             if ev.get("cut_off"):
-                print(f"\n{DIM}[stopped: the answer ran too long; try asking again]{RESET}")
+                print(f"\n{DIM}[已停止：回答太长了，请再问一次]{RESET}")
             elif ev.get("unfinished"):
-                print(f"\n{DIM}[it kept looking things up and did not finish; try asking again]{RESET}")
-            print(f"\n{DIM}[{ev['tokens']} tokens{speed}{note}]{RESET}")
+                print(f"\n{DIM}[它一直在查资料，没有作答，请再问一次]{RESET}")
+            print(f"\n{DIM}[{ev['tokens']} token{speed}{note}]{RESET}")
     return sources, "\n\n".join(r.strip() for r in reasoning if r.strip()) if thoughts else ""
 
 
@@ -100,7 +100,7 @@ def main():
     if not model:
         names = [m for m in installed_models() or [] if not any(x in m for x in ("embed", "bge-", "nomic", "minilm"))]
         if not names:
-            sys.exit("No AI model found. Start Ollama, download a model (ollama pull granite4.2:8b), or use --model.")
+            sys.exit("没有找到 AI 模型。请启动 Ollama，下载一个模型（ollama pull granite4.2:8b），或者用 --model 指定。")
         model = names[0]
     library = None
     if os.path.exists(DB_PATH):
@@ -124,10 +124,10 @@ def main():
     except ImportError:
         pass
     docs, n_sources = library.stats() if library else (0, 0)
-    lib_note = f"library: {docs:,} articles from {n_sources} sources" if library else "no library found"
-    print(f"{BOLD}{model.removesuffix(':latest')}{RESET} {DIM}· offline · {lib_note}{RESET}")
-    print(f"{DIM}Ask anything. /sources shows what the last answer read, /open N opens one, /reasoning shows how it "
-          f"reasoned, /new starts over, /think sets how much it may reason, /limit sets the answer length limit, /bye quits.{RESET}")
+    lib_note = f"知识库：{docs:,} 篇文章，来自 {n_sources} 个来源" if library else "没有找到知识库"
+    print(f"{BOLD}{model.removesuffix(':latest')}{RESET} {DIM}· 离线 · {lib_note}{RESET}")
+    print(f"{DIM}问什么都行。/sources 列出上一个回答读了什么，/open N 打开其中一篇，/reasoning 显示它怎么推理的，"
+          f"/new 重新开始，/think 设置它可以思考多少，/limit 设置回答的长度上限，/bye 退出。{RESET}")
     last_sources, last_reasoning = [], ""
     while True:
         try:
@@ -141,42 +141,42 @@ def main():
             return
         if question == "/new":
             messages, last_sources = messages[:1], []
-            print(f"{DIM}Started over.{RESET}")
+            print(f"{DIM}已重新开始。{RESET}")
             continue
         if question.startswith("/think"):
             pick = question[6:].strip()
             if pick in REASONING_LIMITS:
                 level = pick
                 budget = REASONING_LIMITS[pick]
-                print(f"{DIM}Reasoning: {pick}" + (f" (up to {budget:,} tokens, then it answers)" if budget > 0 else
-                      " (no limit; Ctrl+C stops a model stuck reasoning in circles)" if budget < 0 else "") + f".{RESET}")
+                print(f"{DIM}推理：{pick}" + (f"（最多 {budget:,} token，之后就用现有的内容回答）" if budget > 0 else
+                      "（不限制；模型卡在反复推理里时按 Ctrl+C 停下）" if budget < 0 else "") + f"。{RESET}")
             else:
-                print(f"{DIM}Use /think off, short, medium, long or none (now: {level}).{RESET}")
+                print(f"{DIM}用法：/think off、short、medium、long 或 none（现在是：{level}）。{RESET}")
             continue
         if question.startswith("/limit"):
             pick = question[6:].strip()
             if pick in LENGTH_LIMITS:
                 length = pick
-                print(f"{DIM}Length limit: {pick}{' (use Ctrl+C to stop a stuck answer)' if pick == 'none' else ''}.{RESET}")
+                print(f"{DIM}长度上限：{pick}{'（回答卡住时按 Ctrl+C 停下）' if pick == 'none' else ''}。{RESET}")
             else:
-                print(f"{DIM}Use /limit normal, /limit long or /limit none (now: {length}).{RESET}")
+                print(f"{DIM}用法：/limit normal、/limit long 或 /limit none（现在是：{length}）。{RESET}")
             continue
         if question == "/reasoning":
             print(f"{DIM}{last_reasoning}{RESET}" if last_reasoning else
-                  f"{DIM}The last answer had no reasoning. /think makes the model reason before it answers.{RESET}")
+                  f"{DIM}上一个回答没有推理过程。/think 可以让模型先推理再回答。{RESET}")
             continue
         if question == "/sources":
             if not last_sources:
-                print(f"{DIM}The last answer did not read anything from the library.{RESET}")
+                print(f"{DIM}上一个回答没有从知识库里读任何东西。{RESET}")
             for n, s in enumerate(last_sources, 1):
-                print(f"  {n}. {s['title']} ({s['source']})")
+                print(f"  {n}. {s['title']}（{s['source']}）")
             continue
         if question.startswith("/open"):
             pick = question[5:].strip() or "1"
             if pick.isdigit() and 1 <= int(pick) <= len(last_sources) and library:
                 open_article(library, last_sources[int(pick) - 1]["id"])
             else:
-                print(f"{DIM}Use /open N, where N is a number from /sources.{RESET}")
+                print(f"{DIM}用法：/open N，N 是 /sources 里的编号。{RESET}")
             continue
         messages.append({"role": "user", "content": question})
         trim(messages)
@@ -186,9 +186,9 @@ def main():
             used, last_reasoning = run_turn(model, library, messages, level, caps, length)
             last_sources = used or last_sources
         except KeyboardInterrupt:
-            print(f"\n{DIM}[stopped]{RESET}")
+            print(f"\n{DIM}[已停止]{RESET}")
         except OSError as exc:
-            print(f"\n{DIM}[could not reach the local model: {exc}. Is Ollama running? Try: ollama serve]{RESET}")
+            print(f"\n{DIM}[连不上本地模型：{exc}。Ollama 在运行吗？试试 ollama serve]{RESET}")
 
 
 if __name__ == "__main__":

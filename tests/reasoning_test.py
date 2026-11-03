@@ -139,11 +139,11 @@ with contextlib.redirect_stdout(out):
 printed = out.getvalue()
 check("terminal: the reasoning isn't printed", "search the library" not in printed and "Ready.gov result" not in printed,
       printed)
-check("terminal: one '· thinking' line per stretch, the first with the /reasoning hint",
-      printed.count("· thinking") == 3 and printed.count("/reasoning") == 1, printed)
+check("terminal: one '· 思考' line per stretch, the first with the /reasoning hint",
+      printed.count("· 思考") == 3 and printed.count("/reasoning") == 1, printed)
 check("terminal: /reasoning text, in order with the lookups",
-      reasoning == "The person asks about a generator. I should search the library.\n\n· searching: generator garage"
-                   "\n\nOpen the Ready.gov result.\n\n· reading: Generator safety (Ready.gov)\n\nIt says never in a garage.",
+      reasoning == "The person asks about a generator. I should search the library.\n\n· 搜索：generator garage"
+                   "\n\nOpen the Ready.gov result.\n\n· 阅读：Generator safety（Ready.gov）\n\nIt says never in a garage.",
       reasoning)
 check("terminal: still returns the sources", [s["title"] for s in used] == ["Generator safety"], used)
 rounds[:] = [[say("Boil it for one minute.")]]

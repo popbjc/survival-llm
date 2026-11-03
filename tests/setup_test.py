@@ -68,7 +68,7 @@ for exc, want in cases:
     text, retry = server.download_error(exc)
     check(f"{type(exc).__name__} ({str(exc)[:40]}) -> {want}", retry == want and text, (text, retry))
 check("a dropped connection reads as plain words", server.download_error(ConnectionResetError("x"))[0]
-      == "The internet connection dropped.")
+      == "网络连接中断了。")
 text, _ = server.download_error(OSError(errno.EFBIG, "File too large", "/Volumes/STICK/x"))
 check("a FAT32 stick: says so, with the file", "FAT32" in text and "/Volumes/STICK/x" in text, text)
 text, _ = server.download_error(PermissionError(13, "Permission denied", "/Volumes/USB/x"))
@@ -80,14 +80,15 @@ too_old = RuntimeError("Download failed: pull model manifest: 412: The model you
 server.own_engine_version = lambda: "0.40.11"
 server.running_engine = lambda: {"version": "0.40.9", "ours": False}
 text, retry = server.download_error(too_old)
-check("#13: their older Ollama app: says quit it to use the app's own engine", "Quit Ollama" in text and "0.40.9" in text
+check("#13: their older Ollama app: says quit it to use the app's own engine", "退出 Ollama" in text and "0.40.9" in text
       and "0.40.11" in text and retry is None, text)
 server.running_engine = lambda: {"version": "0.41.0", "ours": False}
 text, _ = server.download_error(too_old)
-check("#13: their Ollama is newer than the app's: says update Ollama", "Update Ollama" in text and "Quit" not in text, text)
+check("#13: their Ollama is newer than the app's: says update Ollama", "更新 Ollama" in text and "退出" not in text, text)
 server.running_engine = lambda: {"version": "0.40.11", "ours": True}
 text, _ = server.download_error(too_old)
-check("#13: the app's own engine is too old: says so, not 'update Ollama'", "built into" in text or "installed" in text, text)
+check("#13: the app's own engine is too old: says so, not 'update Ollama'",
+      "自带" in text and "更新 Ollama" not in text, text)
 
 # ---------- what setup does next ----------
 have = {"pack": None, "models": None, "engine": True}
@@ -252,7 +253,7 @@ server.HIDDEN.update(on=False, models=None)
 # ---------- the setup screen's pack descriptions ----------
 real = json.load(open(os.path.join(ROOT, "docs", "library-packs.json")))["packs"]
 lite = server.pack_summary(next(p for p in real if p["id"] == "lite"))
-check("pack name and contents", lite["name"] == "Essentials" and lite["about"].startswith("Medical, emergency"), lite)
+check("pack name and contents", lite["name"] == "必备包" and lite["about"].startswith("医学"), lite)
 check("pack disk space while installing", lite["disk_gb"] == 5, lite)
 
 # ---------- a real pack install from its parts, leaving no earlier pack's parts behind ----------
@@ -328,7 +329,7 @@ try:
     refused = ""
 except RuntimeError as exc:
     refused = str(exc)
-check("a library update won't replace a folder that holds other files", "other files" in refused
+check("a library update won't replace a folder that holds other files", "还有其他文件" in refused
       and os.path.exists(os.path.join(backup, "photo.jpg")), refused)
 server.LIB = saved_lib
 
@@ -341,7 +342,7 @@ try:
 except RuntimeError as exc:
     failed = str(exc)
 check("a failed move: says so, keeps the library where it was, and threads reopen it",
-      "Couldn't move" in failed and server.LIB == where and server.lib_version[0] > version, (failed, server.LIB))
+      "无法移动" in failed and server.LIB == where and server.lib_version[0] > version, (failed, server.LIB))
 
 # ---------- Your files in another folder ----------
 other_files = os.path.join(TMP, "big-drive", "Documents")

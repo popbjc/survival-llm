@@ -27,8 +27,8 @@ async function api(path, opts = {}) {
 }
 function showStale() {
   if ($("stale")) return;
-  document.body.insertAdjacentHTML("afterbegin", `<div id="stale" class="banner" role="alert">Survival LLM was restarted.
-    <button type="button" class="primary" onclick="location.reload()">Reload this page</button></div>`);
+  document.body.insertAdjacentHTML("afterbegin", `<div id="stale" class="banner" role="alert">Survival LLM 已重启。
+    <button type="button" class="primary" onclick="location.reload()">重新加载此页面</button></div>`);
 }
 // Kept per settings folder: a dev copy's fresh profile (bin/dev --fresh) starts without the normal copy's choices.
 const profile = document.querySelector('meta[name="profile"]')?.content || "";
@@ -107,7 +107,7 @@ function md(src) {
 }
 
 // ---------- status, models, first-run setup ----------
-const nameOf = (model) => (state?.models.find((m) => m.model === model)?.name) || model || "none yet";
+const nameOf = (model) => (state?.models.find((m) => m.model === model)?.name) || model || "尚未选择";
 const jobFor = (key) => state?.downloads.find((d) => d.key === key);
 const activeJobs = () => (state?.downloads || []).filter((d) => ["starting", "downloading", "unpacking"].includes(d.status));
 const isReady = () => state && state.ollama && state.models.length && state.library;
@@ -119,11 +119,11 @@ async function loadStatus() {
   } catch (err) {
     if (err instanceof StaleTab) return;
     if (restarting) {  // the new version starts in a few seconds (with a new page token, so this page then asks to reload)
-      setStatus("warn", "Restarting into the new version…");
+      setStatus("warn", "正在重启到新版本…");
       pollTimer = setTimeout(loadStatus, 2000);
       return;
     }
-    setStatus("off", "Survival LLM has stopped. Open the app again.");
+    setStatus("off", "Survival LLM 已停止。请重新打开应用。");
     return;
   }
   const installed = state.models.map((m) => m.model);
@@ -157,21 +157,21 @@ function setStatus(kind, html) {
 function renderStatus() {
   const s = state;
   if (s.setup) {
-    setStatus("warn", `Setting up: ${setupSteps(s).pct}% downloaded`);
+    setStatus("warn", `正在设置：已下载 ${setupSteps(s).pct}%`);
   } else if (!s.ollama) {
     setStatus(s.ollama_installed ? "warn" : "off", s.ollama_installed
-      ? (s.ollama_starting ? "Starting the AI engine…"
-        : `The AI engine (Ollama) isn't running · <button class="link" type="button" id="status-start">Start it</button>`)
-      : "Setup not finished: the AI engine is needed");
+      ? (s.ollama_starting ? "正在启动 AI 引擎…"
+        : `AI 引擎（Ollama）没有运行 · <button class="link" type="button" id="status-start">启动它</button>`)
+      : "设置未完成：还需要 AI 引擎");
   } else if (!s.models.length || !s.library) {
-    const missing = [!s.models.length && "an AI model", !s.library && "the library"].filter(Boolean).join(" and ");
-    setStatus("warn", s.library || s.models.length ? `Setup not finished: needs ${missing}` : "Not set up yet");
+    const missing = [!s.models.length && "AI 模型", !s.library && "知识库"].filter(Boolean).join("和");
+    setStatus("warn", s.library || s.models.length ? `设置未完成：还需要${missing}` : "尚未完成设置");
   } else if (s.warming.includes(currentModel)) {
-    setStatus("warn", `Getting ${esc(nameOf(currentModel))} ready…`);
+    setStatus("warn", `正在准备 ${esc(nameOf(currentModel))}…`);
   } else {
-    const mine = s.my_files?.ready ? ` + ${s.my_files.ready.toLocaleString()} of your files` : "";
-    setStatus("on", `Ready to use without internet · <button class="link" type="button" id="status-library"
-      title="Switch libraries or move the library">${s.library.articles.toLocaleString()} articles</button>${mine}`);
+    const mine = s.my_files?.ready ? ` + 你的 ${s.my_files.ready.toLocaleString("zh-CN")} 个文件` : "";
+    setStatus("on", `无需联网，随时可用 · <button class="link" type="button" id="status-library"
+      title="切换或移动知识库">${s.library.articles.toLocaleString("zh-CN")} 篇文章</button>${mine}`);
   }
 }
 
@@ -180,9 +180,9 @@ function showModel() {
   els.modelName.textContent = nameOf(currentModel);
   els.using.hidden = !currentModel;
   if (currentModel) {
-    els.using.innerHTML = `Answering with <strong>${esc(nameOf(currentModel))}</strong>`
-      + (entry ? ` by ${esc(entry.maker)}. ${esc(entry.blurb)}` : ".")
-      + ` <button class="ghost" type="button" id="change-model">Change model</button>`;
+    els.using.innerHTML = `正在由 <strong>${esc(nameOf(currentModel))}</strong> 回答`
+      + (entry ? `，来自 ${esc(entry.maker)}。${esc(entry.blurb)}` : "。")
+      + ` <button class="ghost" type="button" id="change-model">更换模型</button>`;
     $("change-model").onclick = openModels;
   }
 }
@@ -204,7 +204,7 @@ function confirmClick(btn, prompt) {
 function selectModel(model, btn = null) {
   if (model === currentModel) { els.dialog.close(); return; }
   const chatting = els.messages.querySelector(".msg.user");
-  if (chatting && !confirmClick(btn, "Starts a new chat: click again")) return;
+  if (chatting && !confirmClick(btn, "会开始一个新对话：再点一次")) return;
   currentModel = model;
   remember("model", model);
   warm(model);
@@ -212,7 +212,7 @@ function selectModel(model, btn = null) {
   if (els.dialog.open) els.dialog.close();
   showModel();
   renderStatus();
-  announce(`Now using ${nameOf(model)}.`);
+  announce(`现在使用 ${nameOf(model)}。`);
 }
 
 // One row per catalog model (download / use), plus any other installed models.
@@ -230,53 +230,53 @@ function modelRows(container, { onlyFitting = false } = {}) {
     const row = document.createElement("div");
     row.className = "model-row" + (current ? " current" : "") + (c.fits ? "" : " unfit");
     row.dataset.key = c.key;
-    const memory = c.fits ? `needs ${c.min_ram} GB of memory (RAM)`
-      : `needs ${c.min_ram} GB of memory (RAM); this computer has ${state.machine.ram_gb} GB`;
+    const memory = c.fits ? `需要 ${c.min_ram} GB 内存（RAM）`
+      : `需要 ${c.min_ram} GB 内存（RAM）；本机只有 ${state.machine.ram_gb} GB`;
     row.innerHTML = `<div class="mr-main">
-        <div class="mr-title">${esc(c.name)} <span class="mr-maker">by ${esc(c.maker)}</span>
-          ${c.recommended ? '<span class="badge">Recommended for this computer</span>' : ""}
-          ${current ? '<span class="badge inuse">In use</span>' : ""}</div>
+        <div class="mr-title">${esc(c.name)} <span class="mr-maker">来自 ${esc(c.maker)}</span>
+          ${c.recommended ? '<span class="badge">适合本机</span>' : ""}
+          ${current ? '<span class="badge inuse">使用中</span>' : ""}</div>
         <div class="mr-blurb">${esc(c.blurb)}</div>
-        <div class="mr-meta">${c.installed ? "Downloaded" : `${c.gb} GB download`} · ${memory}</div>
+        <div class="mr-meta">${c.installed ? "已下载" : `${c.gb} GB 下载`} · ${memory}</div>
       </div><div class="mr-action"></div>`;
     const action = row.querySelector(".mr-action");
     const button = (label, cls, onclick, disabled = false) => {
       const b = document.createElement("button");
       b.type = "button"; b.className = cls; b.textContent = label; b.disabled = disabled; b.onclick = onclick;
-      b.setAttribute("aria-label", `${label}: ${c.name}`);
+      b.setAttribute("aria-label", `${label}：${c.name}`);
       action.appendChild(b);
     };
     if (c.installed) {
-      button(current ? "In use" : "Use this", current ? "ghost" : "primary", (e) => selectModel(c.model, e.currentTarget), current);
+      button(current ? "使用中" : "使用此模型", current ? "ghost" : "primary", (e) => selectModel(c.model, e.currentTarget), current);
     } else if (job && ["starting", "downloading"].includes(job.status)) {
       const pct = job.total ? Math.round((job.completed / job.total) * 100) : 0;
-      action.innerHTML = `<progress max="100" value="${pct}" aria-label="Downloading ${esc(c.name)}"></progress>
-        <p class="meta">${job.total ? `${(job.completed / 1e9).toFixed(1)} of ${(job.total / 1e9).toFixed(1)} GB` : "Starting…"}</p>`;
+      action.innerHTML = `<progress max="100" value="${pct}" aria-label="正在下载 ${esc(c.name)}"></progress>
+        <p class="meta">${job.total ? `${(job.completed / 1e9).toFixed(1)} / ${(job.total / 1e9).toFixed(1)} GB` : "正在启动…"}</p>`;
     } else if (!state.ollama) {
-      action.innerHTML = `<p class="meta">Start the AI engine first</p>`;
+      action.innerHTML = `<p class="meta">请先启动 AI 引擎</p>`;
     } else if (!c.fits_disk) {
-      action.innerHTML = `<p class="meta">Needs ${c.gb + 5} GB free disk; ${state.disk_free_gb} GB free</p>`;
+      action.innerHTML = `<p class="meta">需要 ${c.gb + 5} GB 可用磁盘空间；本机可用 ${state.disk_free_gb} GB</p>`;
     } else if (c.fits || onlyFitting) {
       if (job?.status === "error") action.insertAdjacentHTML("beforeend", `<p class="meta error">${esc(job.error)}</p>`);
-      button(job?.status === "error" ? "Try again" : `Download ${c.gb} GB`, c.recommended ? "primary" : "ghost",
+      button(job?.status === "error" ? "重试" : `下载 ${c.gb} GB`, c.recommended ? "primary" : "ghost",
         () => startModelDownload(c));
     } else {
-      action.innerHTML = `<p class="meta">Too big for this computer</p>`;
+      action.innerHTML = `<p class="meta">本机带不动这个模型</p>`;
     }
     container.appendChild(row);
   }
   const others = state.models.filter((m) => !state.catalog.some((c) => c.installed && c.model === m.model));
   if (others.length && !onlyFitting) {
-    container.insertAdjacentHTML("beforeend", `<div class="group-title">Other models on this computer</div>`);
+    container.insertAdjacentHTML("beforeend", `<div class="group-title">本机上的其他模型</div>`);
     for (const m of others) {
       const current = m.model === currentModel;
       const row = document.createElement("div");
       row.className = "model-row" + (current ? " current" : "");
       row.dataset.key = m.model;
       row.innerHTML = `<div class="mr-main"><div class="mr-title">${esc(m.name)}
-        ${current ? '<span class="badge inuse">In use</span>' : ""}</div>
-        <div class="mr-meta">${m.tested ? "Another copy of a model listed above." : "Not tested with Survival LLM; answers may be worse."}</div></div>
-        <div class="mr-action"><button type="button" class="ghost" ${current ? "disabled" : ""}>${current ? "In use" : "Use this"}</button></div>`;
+        ${current ? '<span class="badge inuse">使用中</span>' : ""}</div>
+        <div class="mr-meta">${m.tested ? "上面列出的某个模型的另一份拷贝。" : "没有在 Survival LLM 上测试过，回答可能更差。"}</div></div>
+        <div class="mr-action"><button type="button" class="ghost" ${current ? "disabled" : ""}>${current ? "使用中" : "使用此模型"}</button></div>`;
       row.querySelector("button").onclick = (e) => selectModel(m.model, e.currentTarget);
       container.appendChild(row);
     }
@@ -286,10 +286,9 @@ function modelRows(container, { onlyFitting = false } = {}) {
 
 function renderModels() {
   const engine = state.engine?.running;
-  els.modelsIntro.textContent = `This ${state.machine.os} computer has ${state.machine.ram_gb} GB of memory (RAM) and `
-    + `${state.disk_free_gb} GB of free disk space. Bigger models know more but need more memory and are slower. `
-    + "Download while you have internet, and leave Survival LLM open until it finishes; an interrupted download picks up where it left off."
-    + (engine ? ` AI engine: Ollama ${engine.version}, ${engine.ours ? "built into Survival LLM" : "the Ollama app running on this computer"}.` : "");
+  els.modelsIntro.textContent = `这台 ${state.machine.os} 电脑有 ${state.machine.ram_gb} GB 内存（RAM），可用磁盘空间 ${state.disk_free_gb} GB。模型越大知道得越多，但需要的内存也更大，速度也更慢。`
+    + `趁有网的时候下载，并保持 Survival LLM 打开直到下载完成；下载中断后会从中断处继续。`
+    + (engine ? ` AI 引擎：Ollama ${engine.version}，${engine.ours ? "内置于 Survival LLM" : "本机运行的 Ollama 应用"}。` : "");
   modelRows(els.modelsList);
 }
 function openModels() {
@@ -301,7 +300,7 @@ function openModels() {
 async function startModelDownload(c) {
   try {
     const resp = await api("/api/pull", { method: "POST", body: JSON.stringify({ model: c.model }) });
-    if (resp.status === 409) announce(`${c.name} is already downloading.`);
+    if (resp.status === 409) announce(`${c.name} 已经在下载了。`);
   } catch { /* status polling shows any problem */ }
   loadStatus();
 }
@@ -318,10 +317,10 @@ function renderLibraryMissing(setupShown) {
   note.hidden = !missing;
   if (!missing) return;
   const html = s.library_away
-    ? `The library isn't where it was: <code>${esc(s.library_dir)}</code>. If it's on a drive, plug the drive in.
-       <button class="link" type="button" id="missing-library">Library window</button>`
-    : `No library yet, so answers come from the AI's memory alone, with no sources to check.
-       <button class="link" type="button" id="missing-library">Get the library</button>`;
+    ? `知识库不在原来的位置：<code>${esc(s.library_dir)}</code>。如果它在某个驱动器上，把驱动器接上。
+       <button class="link" type="button" id="missing-library">知识库窗口</button>`
+    : `还没有知识库，所以回答只来自 AI 已知的内容，没有可核对的来源。
+       <button class="link" type="button" id="missing-library">获取知识库</button>`;
   if (note.dataset.sig === html) return;
   note.dataset.sig = html;
   note.innerHTML = html;
@@ -355,20 +354,19 @@ let moreModels = false;                     // "Other AI models" is open
 
 function progressHTML(job, doing, label) {  // the Updates window's downloads
   const pct = job.total ? Math.round((job.completed / job.total) * 100) : 0;
-  return `<p>${job.status === "unpacking" ? "Unpacking… (a few minutes)" : doing}</p>
+  return `<p>${job.status === "unpacking" ? "正在解包…（需要几分钟）" : doing}</p>
     <progress max="100" value="${pct}" aria-label="${label}"></progress>
-    <p class="meta">${job.total ? `${(job.completed / 1e9).toFixed(1)} of ${(job.total / 1e9).toFixed(1)} GB · ` : ""}Leave Survival LLM open until it finishes. If it gets interrupted, start it again and it picks up where it left off.</p>`;
+    <p class="meta">${job.total ? `${(job.completed / 1e9).toFixed(1)} / ${(job.total / 1e9).toFixed(1)} GB · ` : ""}下载完成前请保持 Survival LLM 打开。如果中断了，重新打开会接着下载。</p>`;
 }
 function sizeText(gb) { return `${gb >= 10 ? Math.round(gb) : (+gb).toFixed(1)} GB`; }
 function timeText(seconds) {
   let minutes = Math.max(1, Math.round(seconds / 60));
-  if (minutes < 2) return "about a minute";
-  if (minutes < 60) return `about ${minutes} minutes`;
+  if (minutes < 2) return "约 1 分钟";
+  if (minutes < 60) return `约 ${minutes} 分钟`;
   let hours = Math.floor(minutes / 60);
   minutes = Math.round((minutes % 60) / 10) * 10;
   if (minutes === 60) { hours += 1; minutes = 0; }
-  const h = `${hours} hour${hours > 1 ? "s" : ""}`;
-  return hours >= 3 || !minutes ? `about ${h}` : `about ${h} ${minutes} minutes`;
+  return hours >= 3 || !minutes ? `约 ${hours} 小时` : `约 ${hours} 小时 ${minutes} 分钟`;
 }
 function option(name, value, checked, enabled, body) {
   return `<label class="ob-option${checked ? " on" : ""}${enabled ? "" : " unfit"}">
@@ -406,80 +404,73 @@ function chooseView(s) {
   const diskGB = Math.ceil((pack?.disk_gb || 0) + modelGB + engineGB * 2.5 + 5);  // 5: room to spare afterwards
 
   let lib;
-  if (!needs.library) lib = `<p class="ob-done">Already on this computer: ${s.library.articles.toLocaleString()} articles.</p>`;
+  if (!needs.library) lib = `<p class="ob-done">本机已有：${s.library.articles.toLocaleString("zh-CN")} 篇文章。</p>`;
   else if (packs.length) {
     lib = packs.map((p) => {
       const fits = p.disk_gb + 5 <= s.disk_free_gb;
       return option("pack", p.id, p.id === choice.pack, fits, `<span class="ob-name">${esc(p.name)}</span>
         <span class="ob-size">${sizeText(p.gb)}</span>
-        <span class="ob-about">${esc(p.about)}.${p.articles ? ` ${p.articles.toLocaleString()} articles.` : ""}</span>
-        <span class="ob-meta">${fits ? `${cap(timeText((p.gb * 1e9) / TYPICAL_SPEED))} to download · needs ${p.disk_gb} GB free while it installs`
-          : `Needs ${p.disk_gb + 5} GB of free disk space; this computer has ${s.disk_free_gb} GB`}</span>`);
+        <span class="ob-about">${esc(p.about)}。${p.articles ? ` ${p.articles.toLocaleString("zh-CN")} 篇文章。` : ""}</span>
+        <span class="ob-meta">${fits ? `${cap(timeText((p.gb * 1e9) / TYPICAL_SPEED))}下载完 · 安装时需要 ${p.disk_gb} GB 可用空间`
+          : `需要 ${p.disk_gb + 5} GB 可用磁盘空间；本机只有 ${s.disk_free_gb} GB`}</span>`);
     }).join("");
   } else {
     lib = s.packs_error === "unavailable"
-      ? `<p>The list of libraries isn't available right now (the download site answered, but without it). It checks again every minute.</p>`
+      ? `<p>暂时拿不到知识库列表（下载站点有回应，但没有给出列表）。它会每分钟再检查一次。</p>`
       : s.packs_error === "offline"
-      ? `<p>Connect to the internet to download the library; this page notices on its own when you're online. If you have a
-        library folder already (from a USB stick, say), choose it with Keep it somewhere else below.</p>`
-      : `<p class="meta">Getting the list of libraries…</p>`;
+      ? `<p>请连接互联网以下载知识库；页面会自己检测到你已联网。如果你已经有知识库文件夹（比如从 U 盘拷来的），用下面的“换个位置保存”来指定它。</p>`
+      : `<p class="meta">正在获取知识库列表…</p>`;
   }
 
   let ai;
   if (aiUnknown) {
-    ai = s.ollama_starting ? `<p class="meta">Getting the AI engine ready… (a few seconds)</p>`
-      : `<p>The AI engine didn't start. <button class="ghost" type="button" id="start-ollama">Start it again</button></p>`;
+    ai = s.ollama_starting ? `<p class="meta">正在准备 AI 引擎…（几秒钟）</p>`
+      : `<p>AI 引擎没有启动。<button class="ghost" type="button" id="start-ollama">重新启动</button></p>`;
   } else if (!needs.ai) {
-    ai = `<p class="ob-done">Already on this computer: ${esc(nameOf(currentModel || s.models[0].model))}. You can change it any time with Model at the top.</p>`;
+    ai = `<p class="ob-done">本机已有：${esc(nameOf(currentModel || s.models[0].model))}。随时可以用顶部的“模型”更换。</p>`;
   } else {
     const modelOption = (m) => {
-      const why = m.slow ? `Needs ${m.min_ram} GB of memory and this computer has ${s.machine.ram_gb} GB, so answers will be slow`
-        : !m.fits ? `Needs ${m.min_ram} GB of memory (RAM); this computer has ${s.machine.ram_gb} GB`
-        : !m.fits_disk && !m.installed ? `Needs ${m.gb + 5} GB of free disk space; this computer has ${s.disk_free_gb} GB`
-        : m.installed ? "Already on this computer" : `${cap(timeText((m.gb * 1e9) / TYPICAL_SPEED))} to download`
-          + (m.preview_cached ? " (seconds in this preview: it's on this Mac)" : "");
+      const why = m.slow ? `需要 ${m.min_ram} GB 内存，而本机只有 ${s.machine.ram_gb} GB，所以回答会比较慢`
+        : !m.fits ? `需要 ${m.min_ram} GB 内存（RAM）；本机只有 ${s.machine.ram_gb} GB`
+        : !m.fits_disk && !m.installed ? `需要 ${m.gb + 5} GB 可用磁盘空间；本机只有 ${s.disk_free_gb} GB`
+        : m.installed ? "本机已有" : `${cap(timeText((m.gb * 1e9) / TYPICAL_SPEED))}下载完`
+          + (m.preview_cached ? "（此预览版只需几秒：它已经在这台 Mac 上）" : "");
       return option("model", m.model, m.model === choice.model && m.pickable, m.pickable, `<span class="ob-name">${esc(m.name)}</span>
-        <span class="ob-size">${m.installed ? "" : sizeText(m.gb)}</span>${m.recommended ? ' <span class="badge">Best for this computer</span>' : ""}
+        <span class="ob-size">${m.installed ? "" : sizeText(m.gb)}</span>${m.recommended ? ' <span class="badge">本机最佳</span>' : ""}
         <span class="ob-about">${esc(m.blurb)}</span>
-        <span class="ob-meta">${why} · by ${esc(m.maker)}</span>`);
+        <span class="ob-meta">${why} · 来自 ${esc(m.maker)}</span>`);
     };
     // The best one for this computer, and the rest folded away (the ones that fit first), so the choice is easy.
     const best = models.find((m) => m.recommended && m.pickable) || models.find((m) => m.pickable);
     const others = [...models.filter((m) => m !== best && m.pickable), ...models.filter((m) => !m.pickable)];
     const open = moreModels || (best && choice.model !== best.model);
-    ai = (best ? modelOption(best) : `<p class="error">None of the AI models fits on this computer
-        (${s.machine.ram_gb} GB of memory, ${s.disk_free_gb} GB of free disk space). You can still download the library and
-        search it yourself.</p>`)
-      + (others.length ? `<details class="ob-more" id="ob-more"${open ? " open" : ""}><summary>${best ? "Other AI models" : "The AI models"}
-          (${others.length})</summary>${others.map(modelOption).join("")}</details>` : "");
+    ai = (best ? modelOption(best) : `<p class="error">没有一个 AI 模型适合这台电脑
+        （${s.machine.ram_gb} GB 内存，${s.disk_free_gb} GB 可用磁盘空间）。你仍然可以下载知识库，自己搜索。</p>`)
+      + (others.length ? `<details class="ob-more" id="ob-more"${open ? " open" : ""}><summary>${best ? "其他 AI 模型" : "AI 模型"}
+          （${others.length}）</summary>${others.map(modelOption).join("")}</details>` : "");
     if (!s.ollama_installed && !s.engine?.downloadable) {
-      ai = `<p>Survival LLM uses the free Ollama app to run the AI on this computer. Install it while you have internet:
-        <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a>. Setup carries on by
-        itself once Ollama is running.</p>` + ai;
+      ai = `<p>Survival LLM 用免费的 Ollama 应用在本机运行 AI。趁有网时安装：
+        <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a>。Ollama 运行起来后，设置会自动继续。</p>` + ai;
     } else if (engineGB) {
-      ai += `<p class="meta">Includes the AI engine that runs it on this computer (${sizeText(engineGB)}).</p>`;
+      ai += `<p class="meta">包含在本机运行它所需的 AI 引擎（${sizeText(engineGB)}）。</p>`;
     }
   }
 
   const waitEngine = aiUnknown && s.ollama_starting;
   const tooBig = downloadGB > 0 && diskGB > s.disk_free_gb;
   const ready = downloadGB > 0 && !tooBig && !waitEngine;  // either half alone, when the other can't be had
-  const label = waitEngine ? "Getting ready…" : downloadGB ? `Download ${sizeText(downloadGB)}` : "Download";
+  const label = waitEngine ? "正在准备…" : downloadGB ? `下载 ${sizeText(downloadGB)}` : "下载";
   const note = tooBig
-    ? `<p class="error">That needs about ${diskGB} GB of free disk space while it installs, and this computer has
-        ${s.disk_free_gb} GB. Pick ${needs.library && pack?.id !== "lite" ? "Essentials or " : ""}a smaller AI, or free up some space.</p>`
-    : downloadGB ? `<p class="meta"><strong>${cap(timeText((downloadGB * 1e9) / TYPICAL_SPEED))}</strong> on typical home
-        internet (50 Mb/s). It keeps going if the internet drops or the computer sleeps.</p>` : "";
+    ? `<p class="error">安装时需要约 ${diskGB} GB 可用磁盘空间，而本机只有 ${s.disk_free_gb} GB。${needs.library && pack?.id !== "lite" ? "改用必备包（Essentials），或" : ""}换一个更小的 AI，或者清理一些空间。</p>`
+    : downloadGB ? `<p class="meta">按一般家庭宽带（50 Mb/s）估算，<strong>${cap(timeText((downloadGB * 1e9) / TYPICAL_SPEED))}</strong>。断网或电脑休眠后它还会继续。</p>` : "";
   if (needs.library) {
-    lib += `<p class="ob-where meta">It will be kept in <code>${esc(s.library_dir)}</code>.
-      <button class="link" type="button" id="ob-where">Keep it somewhere else</button></p>`;
+    lib += `<p class="ob-where meta">它会保存在 <code>${esc(s.library_dir)}</code>。
+      <button class="link" type="button" id="ob-where">换个位置保存</button></p>`;
   }
-  return `<div class="ob-hero"><h1>Set up Survival LLM</h1>
-      <p>Survival LLM is an AI that runs on this computer. It answers from an offline library of medical, emergency and
-        how-to articles, and shows you where each answer came from. Download both once, while you have internet; after
-        that it works with none. If you quit halfway, it picks up where it left off the next time you open it.</p></div>
-    ${part(1, "The library", needs.library ? "What the AI looks things up in. You can read it yourself, too." : "", lib, !needs.library)}
-    ${part(2, "The AI", needs.ai ? "Runs on this computer and writes the answers. Bigger ones know more and make fewer mistakes." : "",
+  return `<div class="ob-hero"><h1>设置 Survival LLM</h1>
+      <p>Survival LLM 是一个运行在这台电脑上的 AI。它从离线的医学、急救和操作指南知识库中查找答案，并告诉你每个回答来自哪里。趁有网时各下载一次，之后断网也能用。如果中途退出，下次打开会接着下载。</p></div>
+    ${part(1, "知识库", needs.library ? "AI 查找资料的地方。你也可以自己阅读。" : "", lib, !needs.library)}
+    ${part(2, "AI", needs.ai ? "在本机运行并撰写回答。越大知道得越多，出错也越少。" : "",
       ai, !needs.ai && !aiUnknown)}
     ${downloadGB || waitEngine ? `<div class="ob-go"><button class="primary big" type="button" id="ob-start"${ready ? "" : " disabled"}>${label}</button>${note}</div>` : ""}`;
 }
@@ -488,16 +479,16 @@ function chooseView(s) {
 function setupSteps(s) {
   const st = s.setup, steps = [];
   if (st.pack) {
-    steps.push({ kind: "library", name: `Library: ${esc(packNames[st.pack]?.name || st.pack)}`, gb: packNames[st.pack]?.gb || 0,
+    steps.push({ kind: "library", name: `知识库：${esc(packNames[st.pack]?.name || st.pack)}`, gb: packNames[st.pack]?.gb || 0,
       done: !!s.library && (!s.library.pack || s.library.pack === st.pack), job: jobFor(`library:${st.pack}`) });
   }
   if (st.model) {
     const engine = jobFor("engine");
     if (engine || (!s.ollama_installed && s.engine?.downloadable)) {
-      steps.push({ kind: "engine", name: "AI engine", gb: s.engine?.gb || 0, done: s.ollama_installed, job: engine });
+      steps.push({ kind: "engine", name: "AI 引擎", gb: s.engine?.gb || 0, done: s.ollama_installed, job: engine });
     }
     const entry = s.catalog.find((c) => bare(c.model) === bare(st.model));
-    steps.push({ kind: "model", name: `AI: ${esc(entry?.name || nameOf(st.model))}`, gb: entry?.gb || 0,
+    steps.push({ kind: "model", name: `AI：${esc(entry?.name || nameOf(st.model))}`, gb: entry?.gb || 0,
       done: hasModel(st.model), job: jobFor(`model:${st.model}`), cached: !!entry?.preview_cached });
   }
   let total = 0, done = 0, rate = 0, waiting = 0;  // waiting: bytes still to download, for the time left
@@ -519,50 +510,48 @@ function stepLine(s, step, first, rate) {
   if (step.done) {
     icon = "✓";
     text = step.kind === "library" && s.library
-      ? `Ready: ${s.library.articles.toLocaleString()} articles. <button class="link" type="button" id="ob-search">Search it now</button>`
-      : "Ready.";
+      ? `就绪：${s.library.articles.toLocaleString("zh-CN")} 篇文章。<button class="link" type="button" id="ob-search">现在搜索</button>`
+      : "就绪。";
   } else if (job?.status === "unpacking") {
-    text = "Unpacking… (a few minutes)";
+    text = "正在解包…（需要几分钟）";
   } else if (busyJob(job)) {
-    text = job.total ? `${gbText(job.completed)} of ${gbText(job.total)}${rate > 0 && !step.cached ? ` · ${timeText(step.left / rate)} left` : ""}`
-      : "Starting…";
+    text = job.total ? `${gbText(job.completed)} / ${gbText(job.total)}${rate > 0 && !step.cached ? ` · 还剩 ${timeText(step.left / rate)}` : ""}`
+      : "正在启动…";
   } else if (here && st.waiting === "retry") {
-    text = `${esc(st.error || "The download stopped.")} Trying again in ${st.retry_in} s.
-      <button class="link" type="button" id="ob-retry">Try now</button>`;
+    text = `${esc(st.error || "下载中断了。")} ${st.retry_in} 秒后重试。
+      <button class="link" type="button" id="ob-retry">立即重试</button>`;
   } else if (here && st.waiting === "stuck") {
-    text = `<span class="error">${esc(st.error || "The download stopped.")}</span>
-      <button class="ghost" type="button" id="ob-retry">Try again</button>`;
+    text = `<span class="error">${esc(st.error || "下载中断了。")}</span>
+      <button class="ghost" type="button" id="ob-retry">重试</button>`;
   } else if (step.kind === "model" && st.waiting === "engine-starting") {
-    text = "Starting the AI engine…";
+    text = "正在启动 AI 引擎…";
   } else if (step.kind === "model" && st.waiting === "install-engine") {
-    text = `Install the free Ollama app to run it: <a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a>.
-      Setup carries on by itself once Ollama is running.`;
+    text = `用它需要先安装免费的 Ollama 应用：<a href="https://ollama.com/download" target="_blank" rel="noopener">ollama.com/download</a>。Ollama 运行起来后，设置会自动继续。`;
   } else {
-    text = `<span class="meta">${first ? "Starting…" : rate > 0 && !step.cached ? `Next: ${gbText(step.left)}, ${timeText(step.left / rate)}` : "Next"}</span>`;
+    text = `<span class="meta">${first ? "正在启动…" : rate > 0 && !step.cached ? `下一步：${gbText(step.left)}，${timeText(step.left / rate)}` : "下一步"}</span>`;
   }
-  if (step.cached && !step.done) text += ` <span class="meta">(on this Mac already, so in this preview it takes seconds)</span>`;
+  if (step.cached && !step.done) text += ` <span class="meta">（已经在这台 Mac 上，所以此预览版只需几秒）</span>`;
   const cls = step.done ? "done" : busyJob(job) ? "active" : here && st.waiting ? "problem" : "";
   return `<li class="${cls}"><span class="ob-icon" aria-hidden="true">${icon}</span><span><strong>${step.name}</strong> · ${text}</span></li>`;
 }
 
 function progressView(s) {
   const p = setupSteps(s);
-  const left = p.rate > 0 && p.waiting > 0 ? ` · ${timeText(p.waiting / p.rate)} left in all` : "";
-  const speed = p.rate > 0 ? ` · <span title="Download speed in megabits a second, the unit internet plans use">${speedText(p.rate)}</span>` : "";
+  const left = p.rate > 0 && p.waiting > 0 ? ` · 总共还剩 ${timeText(p.waiting / p.rate)}` : "";
+  const speed = p.rate > 0 ? ` · <span title="下载速度，单位为兆比特每秒（Mb/s），宽带套餐常用的单位">${speedText(p.rate)}</span>` : "";
   const library = p.steps.find((x) => x.kind === "library");
   const firstOpen = p.steps.find((x) => !x.done);
   const tip = library?.done && p.steps.some((x) => x.kind === "model" && !x.done)
-    ? `<p class="ob-tip">The library is ready, so you can already search it yourself while the AI downloads.</p>` : "";
-  return `<div class="ob-hero"><h1>Setting up Survival LLM</h1></div>
+    ? `<p class="ob-tip">知识库已就绪，AI 还在下载时你就可以自己搜索了。</p>` : "";
+  return `<div class="ob-hero"><h1>正在设置 Survival LLM</h1></div>
     <section class="ob-part">
-      <progress max="100" value="${p.pct}" aria-label="Setup download, ${p.pct}%"></progress>
-      <p class="ob-total"><strong>${p.pct}%</strong> · ${gbText(p.done)} of ${gbText(p.total)}${speed}${left}</p>
+      <progress max="100" value="${p.pct}" aria-label="设置下载，${p.pct}%"></progress>
+      <p class="ob-total"><strong>${p.pct}%</strong> · ${gbText(p.done)} / ${gbText(p.total)}${speed}${left}</p>
       <ul class="ob-steps">${p.steps.map((x) => stepLine(s, x, x === firstOpen, p.rate)).join("")}</ul>
     </section>
     ${tip}
-    <p class="meta ob-foot">Leave Survival LLM open, with the computer plugged in if you can. If the internet drops or the
-      computer sleeps, it carries on by itself; if you quit, it picks up where it left off the next time you open it.
-      <button class="link" type="button" id="ob-change">${isArmed("change") ? "Click again to stop the download and choose again" : "Change what to download"}</button></p>`;
+    <p class="meta ob-foot">请保持 Survival LLM 打开，尽量接上电源。断网或电脑休眠时它会自己继续；如果退出，下次打开会从中断处接着下载。
+      <button class="link" type="button" id="ob-change">${isArmed("change") ? "再点一次会停止下载并重新选择" : "更改要下载的内容"}</button></p>`;
 }
 
 function renderSetup() {
@@ -589,7 +578,7 @@ function renderSetup() {
   els.welcome.hidden = show || chatting;
   renderLibraryMissing(show);
   const libraryNote = s.models.length && !s.library && chatting  // before a chat, the note at the top says it
-    ? "The library isn't downloaded yet, so answers come from the AI's memory alone, with no sources to check." : "";
+    ? "知识库还没下载，所以回答只来自 AI 已知的内容，没有可核对的来源。" : "";
   if (libraryNote || els.composerNote.dataset.setup) {
     els.composerNote.textContent = libraryNote;
     els.composerNote.hidden = !libraryNote;
@@ -598,7 +587,7 @@ function renderSetup() {
   if (!show) {
     if (sawSetup && isReady()) {  // a setup this page watched just finished
       $("ready-note").hidden = false;
-      announce("Setup is done. Survival LLM now works without internet.");
+      announce("设置完成。Survival LLM 现在不需要联网也能用了。");
       sawSetup = false;
     }
     setupSig = ""; els.setup.innerHTML = "";
@@ -632,8 +621,8 @@ async function startSetup(e) {
   const body = { pack: needs.library ? choice.pack : null, model: needs.ai ? choice.model : null };
   try {
     const resp = await api("/api/setup", { method: "POST", body: JSON.stringify(body) });
-    if (!resp.ok) announce((await resp.json().catch(() => ({}))).error || "Couldn't start the download.");
-    else announce("Downloading. This page shows how far along it is.");
+    if (!resp.ok) announce((await resp.json().catch(() => ({}))).error || "无法开始下载。");
+    else announce("正在下载。本页会显示进度。");
   } catch { /* the status poll shows any problem */ }
   loadStatus();
 }
@@ -647,7 +636,7 @@ async function changeSetup() {
 // ---------- the Library window: which pack is installed, the other one, and where it's kept (#4, #9) ----------
 const libraryDialog = $("library-dialog");
 let librarySig = "", libraryNote = null;  // libraryNote: {text, error} about the last move
-const packName = (id) => packNames[id]?.name || { lite: "Essentials", full: "Everything" }[id] || id;
+const packName = (id) => packNames[id]?.name || { lite: "必备包", full: "全量包" }[id] || id;
 
 function openLibrary(keepNote = false) {
   if (!state) return;
@@ -661,38 +650,38 @@ function renderLibrary() {
   const s = state, lib = s.library, move = jobFor("library-move");
   const otherBusy = activeJobs().some((j) => j.key.startsWith("library:") || j.key === "library-move");
   let html = lib
-    ? `<h3>${lib.pack ? `${esc(packName(lib.pack))} is installed` : "Your library"}</h3>
-       <p>${lib.articles.toLocaleString()} articles from ${lib.sources} sources.</p>`
-    : `<h3>No library yet</h3><p>Pick one below. Until then the AI answers from its memory alone, with no sources to check.</p>`;
-  html += `<p class="meta">Kept in <code>${esc(s.library_dir)}</code></p>`;
+    ? `<h3>${lib.pack ? `已安装 ${esc(packName(lib.pack))}` : "你的知识库"}</h3>
+       <p>${lib.articles.toLocaleString("zh-CN")} 篇文章，来自 ${lib.sources} 个来源。</p>`
+    : `<h3>还没有知识库</h3><p>在下面选一个。在此之前，AI 只凭已知内容回答，没有可核对的来源。</p>`;
+  html += `<p class="meta">保存在 <code>${esc(s.library_dir)}</code></p>`;
   if (busyJob(move)) {
-    html += progressHTML(move, "Moving the library to the new folder…", "Library move");
+    html += progressHTML(move, "正在把知识库移动到新文件夹…", "移动知识库");
   } else {
     if (move?.status === "error") html += `<p class="error">${esc(move.error)}</p>`;
     if (libraryNote) html += `<p class="${libraryNote.error ? "error" : "meta"}">${esc(libraryNote.text)}</p>`;
-    html += `<p class="lib-actions">${lib ? `<button class="ghost" type="button" id="lib-show">Show the folder</button> ` : ""}
-      <button class="ghost" type="button" id="lib-move"${otherBusy ? " disabled" : ""}>${lib ? "Move it…" : "Keep it somewhere else…"}</button></p>
-      <p class="meta">${lib ? "Move it to another folder or an external drive. If that folder already holds a library, Survival LLM uses that one instead." : "Pick where the library goes before you download it, an external drive for instance."}</p>`;
+    html += `<p class="lib-actions">${lib ? `<button class="ghost" type="button" id="lib-show">显示文件夹</button> ` : ""}
+      <button class="ghost" type="button" id="lib-move"${otherBusy ? " disabled" : ""}>${lib ? "移动…" : "换个位置保存…"}</button></p>
+      <p class="meta">${lib ? "可以移动到另一个文件夹或外接硬盘。如果那个文件夹里已经有知识库，Survival LLM 会改用那个。" : "下载前先选好知识库的位置，比如外接硬盘。"}</p>`;
   }
   const others = (s.packs || []).filter((p) => p.id !== lib?.pack);
   for (const p of others) {
     const job = jobFor(`library:${p.id}`), fits = p.disk_gb + 5 <= s.disk_free_gb;
-    html += `<h3>${lib ? "Switch to" : "Download"} ${esc(p.name)}</h3>
-      <p>${esc(p.about)}.${p.articles ? ` ${p.articles.toLocaleString()} articles.` : ""}</p>`;
+    html += `<h3>${lib ? "切换到" : "下载"} ${esc(p.name)}</h3>
+      <p>${esc(p.about)}。${p.articles ? ` ${p.articles.toLocaleString("zh-CN")} 篇文章。` : ""}</p>`;
     if (busyJob(job)) {
-      html += progressHTML(job, `Downloading ${esc(p.name)}`, `${p.name} download`);
+      html += progressHTML(job, `正在下载 ${esc(p.name)}`, `${p.name} 下载`);
     } else {
       html += `${job?.status === "error" ? `<p class="error">${esc(job.error)}</p>` : ""}
-        <p class="meta">${sizeText(p.gb)} download, ${timeText((p.gb * 1e9) / TYPICAL_SPEED)} on typical home internet. Needs
-          ${p.disk_gb} GB free while it installs; this computer has ${s.disk_free_gb} GB.${lib ? " Your current library keeps working until the new one is ready, then the new one replaces it." : ""}</p>
+        <p class="meta">下载量 ${sizeText(p.gb)}，按一般家庭宽带约 ${timeText((p.gb * 1e9) / TYPICAL_SPEED)}。安装时需要
+          ${p.disk_gb} GB 可用空间；本机只有 ${s.disk_free_gb} GB。${lib ? " 新的知识库就绪前，当前知识库会继续可用，之后由新的替换它。" : ""}</p>
         <button class="${lib ? "ghost" : "primary"}" type="button" data-pack="${esc(p.id)}"${fits && !otherBusy ? "" : " disabled"}>
-          ${isArmed(`switch:${p.id}`) ? "Click again to download it" : `${lib ? "Switch to" : "Download"} ${esc(p.name)} (${sizeText(p.gb)})`}</button>`;
+          ${isArmed(`switch:${p.id}`) ? "再点一次开始下载" : `${lib ? "切换到" : "下载"} ${esc(p.name)}（${sizeText(p.gb)}）`}</button>`;
     }
   }
   if (!(s.packs || []).length) {
-    html += `<p class="meta">${s.packs_error === "offline" ? "Connect to the internet to see the libraries you can download."
-      : s.packs_error === "unavailable" ? "The list of libraries isn't available right now. It checks again every minute."
-      : "Getting the list of libraries…"}</p>`;
+    html += `<p class="meta">${s.packs_error === "offline" ? "连接互联网即可看到可下载的知识库。"
+      : s.packs_error === "unavailable" ? "暂时拿不到知识库列表。它会每分钟再检查一次。"
+      : "正在获取知识库列表…"}</p>`;
   }
   if (html === librarySig) return;  // rebuilding an unchanged window would knock keyboard focus off its buttons
   librarySig = html;
@@ -714,8 +703,8 @@ function renderReaderLibrary() {
   const lib = state?.library, line = $("reader-lib");
   line.hidden = !lib;
   if (!lib) return;
-  const html = `${lib.pack ? esc(packName(lib.pack)) : "Library"}: ${lib.articles.toLocaleString()} articles ·
-    <button class="link" type="button" id="reader-manage">Switch or move the library</button>`;
+  const html = `${lib.pack ? esc(packName(lib.pack)) : "知识库"}：${lib.articles.toLocaleString("zh-CN")} 篇文章 ·
+    <button class="link" type="button" id="reader-manage">切换或移动知识库</button>`;
   if (line.dataset.sig === html) return;
   line.dataset.sig = html;
   line.innerHTML = html;
@@ -732,15 +721,15 @@ async function chooseFolder(start, question) {
 }
 
 async function moveLibrary() {
-  const folder = await chooseFolder(state.library_dir, "Which folder should the library go in?");
+  const folder = await chooseFolder(state.library_dir, "知识库要放在哪个文件夹？");
   if (!folder) return;
   libraryNote = null;
   try {
     const resp = await api("/api/library/move", { method: "POST", body: JSON.stringify({ folder }) });
     const out = await resp.json().catch(() => ({}));
-    if (!resp.ok) libraryNote = { text: out.error || "Couldn't move the library.", error: true };
-    else if (out.existing) libraryNote = { text: "That folder already had a library, so Survival LLM uses it now." };
-    else if (out.same) libraryNote = { text: "The library is already there." };
+    if (!resp.ok) libraryNote = { text: out.error || "无法移动知识库。", error: true };
+    else if (out.existing) libraryNote = { text: "那个文件夹里已经有知识库，Survival LLM 现在改用它。" };
+    else if (out.same) libraryNote = { text: "知识库已经在那里了。" };
   } catch { return; }
   librarySig = setupSig = "";
   await loadStatus();
@@ -768,9 +757,9 @@ function scrollDown() {
 }
 function setBusy(controller) {
   busy = controller;
-  els.send.textContent = controller ? "Stop" : "Send";
+  els.send.textContent = controller ? "停止" : "发送";
   els.send.classList.toggle("stop", !!controller);
-  els.send.setAttribute("aria-label", controller ? "Stop the answer" : "Send question");
+  els.send.setAttribute("aria-label", controller ? "停止回答" : "发送问题");
 }
 function newChat() {
   if (busy) busy.abort();
@@ -784,7 +773,7 @@ function sourceButton(source, how, strong) {
   const b = document.createElement("button");
   b.type = "button";
   b.className = "chip" + (strong ? " read" : "");
-  b.innerHTML = `${esc(source.title)} <span class="src">· ${esc(source.source)}</span>${source.official ? ' <span class="official" title="Published by a government or health agency. They do not endorse this app.">Official</span>' : ""}`;
+  b.innerHTML = `${esc(source.title)} <span class="src">· ${esc(source.source)}</span>${source.official ? ' <span class="official" title="由政府或卫生机构发布。它们并不为这款应用背书。">官方</span>' : ""}`;
   b.onclick = () => openArticle(source.id, how, b);
   return b;
 }
@@ -792,7 +781,7 @@ function sourceButton(source, how, strong) {
 function needModel(text) {  // keep the question in the box so it can be sent once a model is ready
   els.input.value = text;
   autosize();
-  els.composerNote.textContent = "Download an AI first (in the setup above). Your question will wait here.";
+  els.composerNote.textContent = "请先下载一个 AI（在上面的设置里）。你的问题会留在这里。";
   els.composerNote.hidden = false;
   announce(els.composerNote.textContent);
   els.setup.scrollIntoView({ behavior: "smooth" });
@@ -807,9 +796,9 @@ async function ask(text) {
   const firstLoad = !isLoaded(model);
   els.welcome.hidden = true;
   addMessage("user", `<div class="bubble">${esc(text)}</div>`);
-  const msg = addMessage("assistant", `<details class="how" open><summary>Working on it…</summary><div class="activity"></div></details>
+  const msg = addMessage("assistant", `<details class="how" open><summary>正在处理…</summary><div class="activity"></div></details>
     <div class="answer cursor"></div><div class="remembered"></div>
-    <div class="answer-foot"><div class="meta"></div><button type="button" class="link reasoning-btn" aria-expanded="false">Show reasoning</button></div>
+    <div class="answer-foot"><div class="meta"></div><button type="button" class="link reasoning-btn" aria-expanded="false">显示推理过程</button></div>
     <div class="reasoning" hidden><div class="reasoning-head"></div><div class="reasoning-note"></div><div class="reasoning-body"></div></div>
     <div class="sources"></div>`);
   const how = msg.querySelector(".how"), summary = how.querySelector("summary"), activity = how.querySelector(".activity");
@@ -819,7 +808,7 @@ async function ask(text) {
   let thought = null, thoughts = 0, thoughtMs = 0, thinkSetting;  // thought: the stretch of reasoning streaming in now
   const remembered = msg.querySelector(".remembered"), changes = [];  // memory changes, announced together at the end
   const tick = setInterval(() => {
-    summary.textContent = `${nameOf(model)} is working on it… ${Math.round((Date.now() - started) / 1000)} s`;
+    summary.textContent = `${nameOf(model)} 正在处理… ${Math.round((Date.now() - started) / 1000)} 秒`;
   }, 1000);
   const render = () => { queued = false; answerEl.innerHTML = md(answer); scrollDown(); };
   const note = (label, id, howText) => {
@@ -834,19 +823,19 @@ async function ask(text) {
   // lookups in between, in the order they happened. It streams in while hidden, so it can be opened at any point.
   const reasonBtn = msg.querySelector(".reasoning-btn"), reasoning = msg.querySelector(".reasoning");
   const reasonHead = reasoning.querySelector(".reasoning-head"), reasonBody = reasoning.querySelector(".reasoning-body");
-  const duration = (ms) => `${Math.max(1, Math.round(ms / 1000))} s`;
+  const duration = (ms) => `${Math.max(1, Math.round(ms / 1000))} 秒`;
   const reasonStatus = (final) => {
     const who = nameOf(model);  // one title while it works (switching with each thought read as jumpy)
     // An unfinished answer (it never wrote one) gets no "before it answered".
-    const until = answered && !unfinished ? " before it answered" : stopped ? " before you stopped it" : answered ? "" : " so far";
-    reasonHead.textContent = !final ? (thoughts ? `${who}'s reasoning so far` : "No reasoning yet.")
-      : thoughts ? `${who}'s reasoning${until} · ${duration(thoughtMs)} of thinking`
-      : thinkSetting === false ? `${who} answered without reasoning first, because Reasoning is set to Off. Set it to Short or more before you ask, and it thinks first.`
-      : thinkSetting === null ? `${who} doesn't reason before it answers, so there's nothing to show.`
-      : "No reasoning to show for this answer.";
+    const until = answered && !unfinished ? "（回答之前）" : stopped ? "（你停止之前）" : answered ? "" : "（到目前为止）";
+    reasonHead.textContent = !final ? (thoughts ? `${who} 目前的推理过程` : "还没有推理过程。")
+      : thoughts ? `${who} 的推理过程${until} · 思考了 ${duration(thoughtMs)}`
+      : thinkSetting === false ? `${who} 没有先推理就回答了，因为“推理”设为了关。提问前设为短或更高，它就会先思考。`
+      : thinkSetting === null ? `${who} 回答前不会推理，所以没有可显示的内容。`
+      : "这个回答没有推理过程可显示。";
     reasoning.querySelector(".reasoning-note").textContent = thoughts
-      ? "Before it answers, the AI thinks by writing notes to itself, and looks things up in between. In its notes, “the user” "
-        + "means you. They can include ideas it dropped along the way, so go by the answer." : "";
+      ? "回答之前，AI 会给自己写笔记来思考，中间会去查资料。它笔记里的“用户”指的就是你。"
+        + "其中可能有它后来放弃的想法，所以以回答为准。" : "";
     reasonHead.classList.toggle("plain", !thoughts);  // a sentence saying why there is none, not a heading
     reasonBody.hidden = !thoughts;
   };
@@ -860,7 +849,7 @@ async function ask(text) {
   };
   reasonBtn.onclick = () => {
     reasoning.hidden = !reasoning.hidden;
-    reasonBtn.textContent = reasoning.hidden ? "Show reasoning" : "Hide reasoning";
+    reasonBtn.textContent = reasoning.hidden ? "显示推理过程" : "隐藏推理过程";
     reasonBtn.setAttribute("aria-expanded", String(!reasoning.hidden));
   };
   const paintThought = (t) => {
@@ -871,7 +860,7 @@ async function ask(text) {
   const think = (text) => {
     if (!thought) {
       if (!text.trim()) return;  // blank lines before it starts
-      thought = { el: row("Thought", "r-thought"), text: "", started: Date.now(), queued: false };
+      thought = { el: row("思考", "r-thought"), text: "", started: Date.now(), queued: false };
       thoughts += 1;
       reasonStatus(false);
     }
@@ -886,19 +875,19 @@ async function ask(text) {
     reasonStatus(false);
   };
   const reasonStep = (ev) => {  // a lookup between its thoughts; an article it read opens on a click, as above
-    const what = row({ search: "Searched", read: "Read", show: "Opened" }[ev.type], "r-step");
-    if (ev.type === "search") { what.textContent = `the library for “${ev.query}”`; return; }
+    const what = row({ search: "搜索", read: "阅读", show: "打开" }[ev.type], "r-step");
+    if (ev.type === "search") { what.textContent = `在知识库中搜索“${ev.query}”`; return; }
     const b = document.createElement("button");
     b.type = "button";
     b.className = "linklike";
     b.textContent = `${ev.title} · ${ev.source}`;
-    b.onclick = () => openArticle(ev.id, ev.type === "read" ? "The answer used this part" : "The answer pointed here", b);
+    b.onclick = () => openArticle(ev.id, ev.type === "read" ? "回答引用了这一段" : "回答指向这里", b);
     what.appendChild(b);
   };
-  const lookupLabel = (ev) => (ev.type === "search" ? `Searched the library: “${ev.query}”`
-    : ev.type === "read" ? `Read: ${ev.title} · ${ev.source}` : `Opened for you: ${ev.title}`);
+  const lookupLabel = (ev) => (ev.type === "search" ? `在知识库中搜索了“${ev.query}”`
+    : ev.type === "read" ? `阅读：${ev.title} · ${ev.source}` : `为你打开：${ev.title}`);
   reasonStatus(false);
-  if (firstLoad) note("Loading the AI into memory. The first answer can take a minute, and the fans may spin up; that's normal.");
+  if (firstLoad) note("正在把 AI 载入内存。第一次回答可能需要一分钟，风扇可能会转起来，这是正常的。");
   setBusy(new AbortController());
   scrollDown();
   try {
@@ -909,7 +898,7 @@ async function ask(text) {
       method: "POST", signal: busy.signal,
       body: JSON.stringify({ conversation, model, message: text, reasoning: els.reasoning.value, length: els.length.value }),
     });
-    if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).error || `error ${resp.status}`);
+    if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).error || `错误 ${resp.status}`);
     for await (const ev of events(resp)) {
       if (ev.type !== "thinking") endThought();
       if (["search", "read", "show", "retry"].includes(ev.type)) {
@@ -918,26 +907,26 @@ async function ask(text) {
       }
       if (ev.type === "thinking") think(ev.text);
       else if (ev.type === "think_limit") {  // its reasoning reached the Reasoning limit; told to answer from what it had
-        const said = `Its thinking reached the limit (${Number(ev.limit).toLocaleString()} tokens), so it answered from what it had.`;
+        const said = `它的思考达到了上限（${Number(ev.limit).toLocaleString("zh-CN")} token），所以根据已有的内容作答。`;
         note(said);
-        row("Limit", "r-step").textContent = said;
+        row("上限", "r-step").textContent = said;
       } else if (ev.type === "retry") {
-        note(ev.why === "search" ? "It answered from memory, so it was asked to search the library, as you asked."
-          : "It hadn't written an answer, so it was given the best articles it found and asked again.");
+        note(ev.why === "search" ? "它凭已知内容作答，所以按你的要求让它搜索了知识库。"
+          : "它没有写出回答，所以把找到的最相关的文章交给它，让它再来一次。");
       } else if (ev.type === "memory_check") memoryChecking(msg, true);
       else if (ev.type === "memory") changes.push(showRemembered(remembered, ev));
-      else if (ev.type === "memory_failed") memoryNote(remembered, "Couldn't update memory this time.");
-      else if (ev.type === "memory_unchanged") memoryNote(remembered, "Memory didn't change. You can edit it yourself:", true);
+      else if (ev.type === "memory_failed") memoryNote(remembered, "这次没能更新记忆。");
+      else if (ev.type === "memory_unchanged") memoryNote(remembered, "记忆没有变化。你可以自己修改：", true);
       else if (ev.type === "search") note(lookupLabel(ev));
-      else if (ev.type === "read") note(lookupLabel(ev), ev.id, "The answer used this part");
+      else if (ev.type === "read") note(lookupLabel(ev), ev.id, "回答引用了这一段");
       else if (ev.type === "show") {
-        note(lookupLabel(ev), ev.id, "The answer pointed here");
-        if (!narrow()) openArticle(ev.id, "The answer pointed here");
+        note(lookupLabel(ev), ev.id, "回答指向这里");
+        if (!narrow()) openArticle(ev.id, "回答指向这里");
       } else if (ev.type === "token") {
         answer += ev.text;
         if (!queued) { queued = true; requestAnimationFrame(render); }
       } else if (ev.type === "error" && answered) {
-        memoryNote(remembered, "Couldn't update memory this time.");  // the answer itself is fine
+        memoryNote(remembered, "这次没能更新记忆。");  // the answer itself is fine
       } else if (ev.type === "error") {
         failed = true;
         meta.textContent = ev.message;
@@ -952,22 +941,22 @@ async function ask(text) {
         showSources(sourcesEl, ev);
         const secs = Math.round((Date.now() - started) / 1000);
         meta.textContent = ev.cut_off
-          ? `${nameOf(model)} was stopped after ${secs} s because the answer reached the length limit. Keep going, or raise the limit below.`
+          ? `${nameOf(model)} 在 ${secs} 秒后被停止，因为回答达到了长度上限。可以点继续，或在下面调高上限。`
           : ev.unfinished
-            ? (ev.sources?.length ? `${nameOf(model)} didn't finish an answer. Try asking again, or open the articles it read below.`
-              : ev.seen?.length ? `${nameOf(model)} didn't finish an answer. Try asking again, or open one of the search results below.`
-              : `${nameOf(model)} didn't write an answer. Try asking again.`)
-            : `Answered by ${nameOf(model)} in ${secs} s`;
-        meta.title = ev.seconds ? `${ev.tokens} tokens at ${Math.round(ev.tokens / ev.seconds)} tokens per second` : "";
+            ? (ev.sources?.length ? `${nameOf(model)} 没有写完回答。可以再问一次，或者打开下面它读过的文章。`
+              : ev.seen?.length ? `${nameOf(model)} 没有写完回答。可以再问一次，或者打开下面的搜索结果之一。`
+              : `${nameOf(model)} 没有写出回答。可以再问一次。`)
+            : `由 ${nameOf(model)} 回答，用时 ${secs} 秒`;
+        meta.title = ev.seconds ? `${ev.tokens} token，每秒 ${Math.round(ev.tokens / ev.seconds)} token` : "";
         if (ev.cut_off) {
           const more = document.createElement("button");
           more.type = "button";
           more.className = "ghost keep-going";
-          more.textContent = "Keep going";
-          more.onclick = () => { if (busy) return; more.remove(); ask("Please continue exactly where you stopped."); };
+          more.textContent = "继续";
+          more.onclick = () => { if (busy) return; more.remove(); ask("请从你中断的地方继续。"); };
           reasoning.after(more);
         }
-        announce(`Answer ready from ${nameOf(model)}.`);
+        announce(`${nameOf(model)} 的回答已完成。`);
       }
     }
   } catch (err) {
@@ -976,16 +965,16 @@ async function ask(text) {
     // Notes go in the meta line: a pending render() would wipe anything added to the answer itself.
     else if (err.name === "AbortError" && answered) {
       failed = false;
-      if (remembered.querySelector(".memory-checking")) memoryNote(remembered, "Stopped updating memory. Anything it already saved is in Memory.", true);
-    } else if (err.name === "AbortError") { meta.textContent = "Stopped."; stopped = true; }
-    else { meta.textContent = `Couldn't get an answer: ${err.message || err}`; meta.classList.add("error"); }
+      if (remembered.querySelector(".memory-checking")) memoryNote(remembered, "已停止更新记忆。它已经保存的内容在“记忆”里。", true);
+    } else if (err.name === "AbortError") { meta.textContent = "已停止。"; stopped = true; }
+    else { meta.textContent = `没能得到回答：${err.message || err}`; meta.classList.add("error"); }
   } finally {
     clearInterval(tick);
     endThought();
     reasonStatus(true);
     memoryChecking(msg, false);
     if (changes.length) announce(changes.join(". "));
-    summary.textContent = steps ? `How it found this (${steps} step${steps === 1 ? "" : "s"})` : "Details";
+    summary.textContent = steps ? `查询过程（${steps} 步）` : "详情";
     how.open = false;
     if (!steps) how.hidden = true;
     answerEl.classList.remove("cursor");
@@ -999,26 +988,24 @@ function showSources(el, ev) {
   el.innerHTML = "";
   const read = ev.sources || [], seen = ev.seen || [];
   if (read.length) {
-    el.insertAdjacentHTML("beforeend", `<div class="label">Sources it read · click to open</div>`);
-    for (const s of read) el.appendChild(sourceButton(s, "The answer used this part", true));
+    el.insertAdjacentHTML("beforeend", `<div class="label">阅读过的来源 · 点击打开</div>`);
+    for (const s of read) el.appendChild(sourceButton(s, "回答引用了这一段", true));
   } else if (seen.length) {
-    el.insertAdjacentHTML("beforeend", `<div class="label">It searched, but didn't open any of these · click to read them</div>`);
-    for (const s of seen.slice(0, 5)) el.appendChild(sourceButton(s, "This matched the search", true));
+    el.insertAdjacentHTML("beforeend", `<div class="label">它搜索了，但没有打开其中任何一篇 · 点击阅读</div>`);
+    for (const s of seen.slice(0, 5)) el.appendChild(sourceButton(s, "这条匹配了搜索", true));
   } else if (state?.library) {
-    el.insertAdjacentHTML("beforeend", `<div class="memory-note">This answer came from what the AI already knows, not the library,
-      so there's no source to check. Ask “look that up” to get one.</div>`);
+    el.insertAdjacentHTML("beforeend", `<div class="memory-note">这个回答来自 AI 已知的内容，不是知识库，所以没有可核对的来源。想让它查来源，可以问“帮我查一下”。</div>`);
   } else {
-    el.insertAdjacentHTML("beforeend", `<div class="memory-note">No library installed yet, so this answer came from what the AI
-      already knows, with no source to check.</div>`);
+    el.insertAdjacentHTML("beforeend", `<div class="memory-note">还没有安装知识库，所以这个回答来自 AI 已知的内容，没有可核对的来源。</div>`);
   }
   const rest = read.length ? seen : seen.slice(5);
   if (rest.length) {
     const more = document.createElement("details");
     more.className = "more";
-    more.innerHTML = `<summary>Other search results (${rest.length})</summary>`;
+    more.innerHTML = `<summary>其他搜索结果（${rest.length}）</summary>`;
     const wrap = document.createElement("div");
     wrap.className = "sources";
-    for (const s of rest.slice(0, 15)) wrap.appendChild(sourceButton(s, "This matched the search", false));
+    for (const s of rest.slice(0, 15)) wrap.appendChild(sourceButton(s, "这条匹配了搜索", false));
     more.appendChild(wrap);
     el.appendChild(more);
   }
@@ -1027,14 +1014,14 @@ function showSources(el, ev) {
 // After the answer, the AI takes a moment to update its notes about the person; Send waits for it.
 function memoryChecking(msg, on) {
   msg.querySelector(".memory-checking")?.remove();
-  if (on) msg.querySelector(".remembered").insertAdjacentHTML("beforeend", `<div class="memory-checking">Updating memory…</div>`);
+  if (on) msg.querySelector(".remembered").insertAdjacentHTML("beforeend", `<div class="memory-checking">正在更新记忆…</div>`);
 }
 
 function seeMemoryButton() {
   const see = document.createElement("button");
   see.type = "button";
   see.className = "link";
-  see.textContent = "See memory";
+  see.textContent = "查看记忆";
   see.onclick = () => openMemory();
   return see;
 }
@@ -1054,9 +1041,9 @@ function showRemembered(el, ev) {
   const row = document.createElement("div");
   row.className = "memory-saved";
   const text = document.createElement("span");
-  const said = { add: `Remembered: “${ev.note}”`, change: `Updated a memory: “${ev.note}”`, delete: `Forgot: “${ev.old}”`,
-                 full: `Memory is full, so it didn't save “${ev.note}”. Delete notes you don't need in Memory.` };
-  text.textContent = said[ev.action] || "Changed its memory";
+  const said = { add: `已记住：“${ev.note}”`, change: `已更新记忆：“${ev.note}”`, delete: `已忘记：“${ev.old}”`,
+                 full: `记忆已满，没有保存“${ev.note}”。可以在“记忆”里删掉不需要的条目。` };
+  text.textContent = said[ev.action] || "记忆已更改";
   if (ev.action === "full") {
     row.append(text, " ", seeMemoryButton());
     el.appendChild(row);
@@ -1066,19 +1053,19 @@ function showRemembered(el, ev) {
   const undo = document.createElement("button");
   undo.type = "button";
   undo.className = "link";
-  undo.textContent = "Undo";
+  undo.textContent = "撤销";
   undo.onclick = async () => {
     undo.disabled = true;
     try {
       const resp = await api("/api/memory/undo", { method: "POST", body: JSON.stringify(ev) });
       if (!resp.ok) throw new Error();
-      text.textContent = { add: `Undone: it won't remember “${ev.note}”`, change: `Undone: back to “${ev.old}”`,
-                           delete: `Undone: it remembers “${ev.old}” again` }[ev.action];
+      text.textContent = { add: `已撤销：它不会记住“${ev.note}”`, change: `已撤销：恢复为“${ev.old}”`,
+                           delete: `已撤销：它重新记住了“${ev.old}”` }[ev.action];
       undo.remove();
       sep.remove();
     } catch (err) {
       if (!(err instanceof StaleTab)) {
-        text.textContent = `${said[ev.action]}. Couldn't undo it here, maybe because the note was edited since; change it in Memory.`;
+        text.textContent = `${said[ev.action]}。这里无法撤销，可能是那条之后被改过；请在“记忆”里修改。`;
         undo.remove();
         sep.remove();
       } else undo.disabled = false;
@@ -1101,23 +1088,23 @@ function hideReader() {
   if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
 }
 
-async function openArticle(id, how = "This matched the search", opener = null) {
+async function openArticle(id, how = "这条匹配了搜索", opener = null) {
   const request = ++readerRequest;
   showReader(opener);
-  els.readerBody.innerHTML = `<p class="meta">Opening…</p>`;
+  els.readerBody.innerHTML = `<p class="meta">正在打开…</p>`;
   let doc;
   try {
     const resp = await api(`/api/article?id=${encodeURIComponent(id)}`);
     if (!resp.ok) throw new Error();
     doc = await resp.json();
   } catch {
-    if (request === readerRequest) els.readerBody.innerHTML = `<p class="error">Couldn't open that source.</p>`;
+    if (request === readerRequest) els.readerBody.innerHTML = `<p class="error">无法打开那个来源。</p>`;
     return;
   }
   if (request !== readerRequest) return;  // a newer source was opened meanwhile
   let html = `<div class="doc-head"><h2 id="doc-title" tabindex="-1">${esc(doc.title)}</h2>
-    <div class="src-line">${esc(doc.source)}${doc.official ? ' <span class="official" title="Published by a government or health agency. They do not endorse this app.">Official</span>' : ""}${doc.url ? " · " + esc(doc.url) : ""}</div>
-    ${doc.license ? `<div class="src-line license">License: ${linkify(doc.license)}</div>` : ""}</div>`;
+    <div class="src-line">${esc(doc.source)}${doc.official ? ' <span class="official" title="由政府或卫生机构发布。它们并不为这款应用背书。">官方</span>' : ""}${doc.url ? " · " + esc(doc.url) : ""}</div>
+    ${doc.license ? `<div class="src-line license">许可协议：${linkify(doc.license)}</div>` : ""}</div>`;
   for (const part of doc.parts) {
     const cited = part.id === doc.focus;
     html += `<section class="${cited ? "cited" : ""}">${cited ? `<div class="cited-label">${esc(how)}</div>` : ""}${md(part.text)}</section>`;
@@ -1135,16 +1122,16 @@ async function openArticle(id, how = "This matched the search", opener = null) {
 async function searchLibrary(q) {
   const request = ++readerRequest;
   showReader(els.search);
-  els.readerBody.innerHTML = `<p class="meta">Searching…</p>`;
+  els.readerBody.innerHTML = `<p class="meta">正在搜索…</p>`;
   let results = [];
   try { results = (await (await api(`/api/search?q=${encodeURIComponent(q)}`)).json()).results; } catch { /* below */ }
   if (request !== readerRequest) return;
   els.readerBody.innerHTML = results.length
-    ? `<p class="meta">${results.length} results for “${esc(q)}”</p>` + results.map((r) => `<button type="button" class="result" data-id="${r.id}">
-        <span class="r-title">${esc(r.title)}</span><span class="r-src">${esc(r.source)}${r.official ? ' <span class="official" title="Published by a government or health agency. They do not endorse this app.">Official</span>' : ""}</span>
+    ? `<p class="meta">“${esc(q)}”的 ${results.length} 条结果</p>` + results.map((r) => `<button type="button" class="result" data-id="${r.id}">
+        <span class="r-title">${esc(r.title)}</span><span class="r-src">${esc(r.source)}${r.official ? ' <span class="official" title="由政府或卫生机构发布。它们并不为这款应用背书。">官方</span>' : ""}</span>
         <span class="r-snip">${esc(r.snippet)}</span></button>`).join("")
-    : `<p class="meta">Nothing found for “${esc(q)}”. Try fewer or different words.</p>`;
-  for (const el of els.readerBody.querySelectorAll(".result")) el.onclick = () => openArticle(+el.dataset.id, "This matched your search", el);
+    : `<p class="meta">没有找到与“${esc(q)}”相关的内容。试试更少或不同的词。</p>`;
+  for (const el of els.readerBody.querySelectorAll(".result")) el.onclick = () => openArticle(+el.dataset.id, "这条匹配了你的搜索", el);
 }
 
 // ---------- wiring ----------
@@ -1172,8 +1159,8 @@ els.reasoning.value = recall("reasoning") || "off";
 if (!els.reasoning.value) els.reasoning.value = "off";  // a value saved by a version with other choices
 const lengthNote = () => {  // warns when a limit is off: a stuck model then runs until Stop
   const lines = [];
-  if (els.reasoning.value === "none") lines.push("With no reasoning limit, a model can get stuck reasoning in circles and keep going until you press Stop.");
-  if (els.length.value === "none") lines.push("With no length limit, a model stuck repeating itself keeps going until you press Stop.");
+  if (els.reasoning.value === "none") lines.push("不限制推理时，模型可能陷入循环思考，一直停不下来，直到你按停止。");
+  if (els.length.value === "none") lines.push("不限制长度时，模型可能不断重复自己，一直停不下来，直到你按停止。");
   $("length-note").textContent = lines.join(" ");
   $("length-note").hidden = !lines.length;
 };
@@ -1190,7 +1177,7 @@ $("close-models").onclick = () => els.dialog.close();
 
 // ---------- the person's own files ----------
 const FILE_TYPES = [".pdf", ".docx", ".odt", ".epub", ".html", ".htm", ".txt", ".md", ".markdown", ".csv"];
-const CANT_READ = "Survival LLM can't read this kind of file. It reads PDF, Word, EPUB, web pages and text files.";
+const CANT_READ = "Survival LLM 读不了这种文件。它能读 PDF、Word、EPUB、网页和纯文本文件。";
 const filesDialog = $("files-dialog");
 let myFiles = null;        // last /api/myfiles
 let filesTimer = null, filesSig = "", filesChecks = 0, adding = 0;
@@ -1199,7 +1186,7 @@ let addedNames = [];       // files added since the window opened, reported in o
 let fileAsks = [];         // files whose name is taken, waiting for Replace it or Keep both: {file, name}
 
 const readable = (name) => FILE_TYPES.some((t) => name.toLowerCase().endsWith(t));
-const trashName = () => (state?.machine.os === "Windows" ? "Recycle Bin" : "Trash");
+const trashName = () => (state?.machine.os === "Windows" ? "回收站" : "废纸篓");
 
 function openFiles() {
   fileNotes = [];
@@ -1220,24 +1207,24 @@ async function refreshFiles(check = false) {
 
 function renderFiles() {
   const f = myFiles || { items: [] };
-  $("files-status").textContent = adding ? `Adding ${adding === 1 ? "a file" : `${adding} files`}…`
-    : f.busy && f.doing ? `Reading ${f.doing} (${f.done + 1} of ${f.total})… Big files take a minute or two.` : "";
-  const added = addedNames.length > 3 ? `${addedNames.slice(0, 3).join(", ")} and ${addedNames.length - 3} more` : addedNames.join(", ");
-  $("files-notes").innerHTML = (added ? `<p class="meta">Added ${esc(added)}.</p>` : "")
+  $("files-status").textContent = adding ? `正在添加 ${adding} 个文件…`
+    : f.busy && f.doing ? `正在读取 ${f.doing}（第 ${f.done + 1}/${f.total} 个）… 大文件需要一两分钟。` : "";
+  const added = addedNames.length > 3 ? `${addedNames.slice(0, 3).join("、")} 等另外 ${addedNames.length - 3} 个文件` : addedNames.join("、");
+  $("files-notes").innerHTML = (added ? `<p class="meta">已添加 ${esc(added)}。</p>` : "")
     + fileNotes.map((n) => `<p class="${n.error ? "error" : "meta"}">${esc(n.text)}</p>`).join("");
   $("files-ask").hidden = !fileAsks.length;
-  if (fileAsks.length) $("files-ask-text").textContent = `You already have a file called “${fileAsks[0].name}”. Replace it with this one?`;
+  if (fileAsks.length) $("files-ask-text").textContent = `你已经有一个叫“${fileAsks[0].name}”的文件了。要用这个替换它吗？`;
   $("files-folder").textContent = f.folder
-    ? `They're kept in ${f.folder}. Files you put in that folder, or change there, are picked up on their own.` : "";
+    ? `它们保存在 ${f.folder} 里。放进或改动那个文件夹的文件会被自动识别。` : "";
   const sig = JSON.stringify(f.items);
   if (sig === filesSig) return;  // rebuilding the list would undo a half-confirmed Remove
   filesSig = sig;
   $("files-list").innerHTML = f.items.length ? f.items.map((it) => `<li>
       <div class="f-main"><div class="f-title">${esc(it.title || it.name)}</div>
-        <div class="meta">${it.title && it.title !== it.name ? `${esc(it.name)} · ` : ""}${it.status === "ready" ? "Ready: the AI searches it" : "The AI can't search this one"}</div>
+        <div class="meta">${it.title && it.title !== it.name ? `${esc(it.name)} · ` : ""}${it.status === "ready" ? "就绪：AI 会搜索它" : "AI 无法搜索这个文件"}</div>
         ${it.error ? `<div class="error">${esc(it.error)}</div>` : ""}</div>
-      <button class="ghost" type="button" data-name="${esc(it.name)}">Remove</button></li>`).join("")
-    : `<li class="empty meta">No files yet.</li>`;
+      <button class="ghost" type="button" data-name="${esc(it.name)}">移除</button></li>`).join("")
+    : `<li class="empty meta">还没有文件。</li>`;
   for (const b of $("files-list").querySelectorAll("button[data-name]")) b.onclick = () => removeFile(b.dataset.name, b);
 }
 
@@ -1249,12 +1236,12 @@ async function sendFile(file, how = "") {  // how: "" (ask if the name is taken)
       { method: "POST", body: file, headers: { "Content-Type": "application/octet-stream" } });
     const out = await resp.json();
     if (resp.status === 409) fileAsks.push({ file, name: out.name || file.name });
-    else if (!resp.ok) fileNotes.push({ error: true, text: `${file.name}: ${out.error || "couldn't add it."}` });
-    else if (out.duplicate || out.unchanged) fileNotes.push({ text: `${out.name} is already in your files.` });
-    else if (out.replaced) fileNotes.push({ text: `Replaced ${out.replaced} with the new version. The old one is in the ${trashName()}.` });
+    else if (!resp.ok) fileNotes.push({ error: true, text: `${file.name}：${out.error || "无法添加。"}` });
+    else if (out.duplicate || out.unchanged) fileNotes.push({ text: `${out.name} 已经在你的文件里了。` });
+    else if (out.replaced) fileNotes.push({ text: `已用新版本替换 ${out.replaced}。旧文件在${trashName()}里。` });
     else addedNames.push(out.name);
   } catch (err) {
-    if (!(err instanceof StaleTab)) fileNotes.push({ error: true, text: `${file.name}: couldn't add it. Is Survival LLM still running?` });
+    if (!(err instanceof StaleTab)) fileNotes.push({ error: true, text: `${file.name}：无法添加。Survival LLM 还在运行吗？` });
   } finally {
     adding--;
     renderFiles();
@@ -1283,10 +1270,10 @@ async function answerAsk(how) {
 }
 
 async function removeFile(name, btn) {
-  if (!confirmClick(btn, `Click again to move it to the ${trashName()}`)) return;
+  if (!confirmClick(btn, `再点一次会把它移到${trashName()}`)) return;
   try {
     const resp = await api("/api/myfiles/remove", { method: "POST", body: JSON.stringify({ name }) });
-    fileNotes.push(resp.ok ? { text: `Removed ${name}. It's in the ${trashName()} if you want it back.` }
+    fileNotes.push(resp.ok ? { text: `已移除 ${name}。它现在在${trashName()}里，需要的话可以取回。` }
       : { error: true, text: (await resp.json()).error });
   } catch { /* a stale page shows its own banner */ }
   refreshFiles(true);
@@ -1300,13 +1287,13 @@ $("choose-files").onclick = () => $("file-input").click();
 $("file-input").onchange = (e) => { addFiles(e.target.files); e.target.value = ""; };
 $("open-folder").onclick = () => api("/api/myfiles/open", { method: "POST", body: "{}" }).catch(() => {});
 $("files-move").onclick = async () => {
-  const folder = await chooseFolder(myFiles?.folder || state?.files_dir, "Which folder are your files in?");
+  const folder = await chooseFolder(myFiles?.folder || state?.files_dir, "你的文件在哪个文件夹里？");
   if (!folder) return;
   const resp = await api("/api/myfiles/folder", { method: "POST", body: JSON.stringify({ folder }) }).catch(() => null);
   const out = resp ? await resp.json().catch(() => ({})) : {};
   $("files-move-status").textContent = !resp ? "" : resp.ok
-    ? "Survival LLM now searches the files in that folder. The files in the old folder stay where they were."
-    : out.error || "Couldn't use that folder.";
+    ? "Survival LLM 现在会搜索那个文件夹里的文件。旧文件夹里的文件仍留在原处。"
+    : out.error || "无法使用那个文件夹。";
   $("files-move-status").className = resp && !resp.ok ? "error" : "meta";
   filesSig = "";
   refreshFiles(true);
@@ -1332,33 +1319,33 @@ document.addEventListener("drop", (e) => {
   showDrop(false);
   const folders = new Set([...e.dataTransfer.items].map((i) => i.webkitGetAsEntry?.()).filter((en) => en?.isDirectory).map((en) => en.name));
   addFiles([...e.dataTransfer.files].filter((f) => !folders.has(f.name)), [...folders].map((name) =>
-    ({ error: true, text: `${name} is a folder. To add a whole folder, click Open the folder and put it there.` })));
+    ({ error: true, text: `${name} 是个文件夹。要添加整个文件夹，请点“打开文件夹”并把文件放进去。` })));
 });
 
 // ---------- updates ----------
 const updatesDialog = $("updates-dialog");
 let updateReport = null, updateChecking = false, updatesSig = "";
-const day = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { dateStyle: "medium" });
+const day = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString("zh-CN", { dateStyle: "medium" });
 const size = (gb) => (Number(gb) < 1 ? `${Math.round(Number(gb) * 1000)} MB` : `${Number(gb)} GB`);
 let updateError = "";
 
 function renderVersion() {
   $("version-line").hidden = !state.version;
-  $("version-text").textContent = `Survival LLM ${state.version}` + (state.dev ? ` · dev copy: ${state.dev}` : "");
+  $("version-text").textContent = `Survival LLM ${state.version}` + (state.dev ? ` · 开发副本：${state.dev}` : "");
   $("dev-badge").hidden = !state.dev;  // a copy for trying changes before they ship (bin/dev)
-  $("dev-badge").title = state.dev ? `Dev copy: ${state.dev}` : "";
+  $("dev-badge").title = state.dev ? `开发副本：${state.dev}` : "";
   const app = state.update?.app, lib = state.update?.library;
-  $("updates-btn").textContent = app || lib ? "Update available" : "Check for updates";
+  $("updates-btn").textContent = app || lib ? "有可用更新" : "检查更新";
   // A new version of the app first; after that (or once it's dismissed), a newer library, which is optional: the one
   // installed keeps working, and Not now hides the offer until the next library comes out.
   const showApp = app && recall("update-dismissed") !== app;
   const showLib = !showApp && lib && !busyJob(jobFor(`library:${lib.id}`)) && recall("library-dismissed") !== lib.version;
   $("update-banner").hidden = !showApp && !showLib;
   $("update-banner").dataset.kind = showApp ? "app" : showLib ? "library" : "";
-  if (showApp) $("update-banner").querySelector(".update-text").textContent = `Survival LLM ${app} is available.`;
+  if (showApp) $("update-banner").querySelector(".update-text").textContent = `Survival LLM ${app} 已发布。`;
   if (showLib) {
-    $("update-banner").querySelector(".update-text").textContent = `A newer library is available.`
-      + (lib.notes ? ` ${lib.notes}` : "") + ` It's a ${size(lib.gb)} download, and yours keeps working until it's in.`;
+    $("update-banner").querySelector(".update-text").textContent = `有更新版本的知识库。`
+      + (lib.notes ? ` ${lib.notes}` : "") + ` 下载量 ${size(lib.gb)}，新的装好之前你现在这个继续可用。`;
   }
   if (updatesDialog.open) renderUpdates();
 }
@@ -1378,43 +1365,43 @@ function renderUpdates() {
   const r = updateReport;
   const busy = (job) => job && ["starting", "downloading", "unpacking"].includes(job.status);
   let html;
-  if (updateChecking) html = `<p class="meta">Checking for updates…</p>`;
-  else if (!r) html = `<p class="error">Couldn't check for updates. Is Survival LLM still running?</p>`;
+  if (updateChecking) html = `<p class="meta">正在检查更新…</p>`;
+  else if (!r) html = `<p class="error">无法检查更新。Survival LLM 还在运行吗？</p>`;
   else {
-    html = r.failed ? `<p class="error">The last update couldn't be installed (${esc(r.failed)}). You still have version ${esc(r.version)}.</p>` : "";
+    html = r.failed ? `<p class="error">上一次更新没能安装（${esc(r.failed)}）。你用的仍是 ${esc(r.version)} 版本。</p>` : "";
     const job = jobFor("app-update");
     if (r.app) {
       const a = r.app;
-      html += `<h3>Survival LLM ${esc(a.version)} is available</h3>
-        <p class="meta">You have ${esc(r.version)}.${a.date ? ` Released ${esc(day(a.date))}.` : ""} ${size(a.gb)} download.</p>`;
-      if (Array.isArray(a.notes) && a.notes.length) html += `<ul class="notes">${a.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>`;
-      if (busy(job)) html += progressHTML(job, `Downloading Survival LLM ${esc(a.version)}`, "Update download");
-      else if (job?.status === "done") html += `<p>Installed. Survival LLM is restarting into the new version…</p>`;
+      html += `<h3>Survival LLM ${esc(a.version)} 已发布</h3>
+        <p class="meta">你用的是 ${esc(r.version)}。${a.date ? `发布于 ${esc(day(a.date))}。` : ""}下载量 ${size(a.gb)}。</p>`;
+      if (Array.isArray(a.notes) && a.notes.length) html += `<ul class="notes">${a.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>`
+        + `<p class="meta">（发行说明为英文原文）</p>`;
+      if (busy(job)) html += progressHTML(job, `正在下载 Survival LLM ${esc(a.version)}`, "更新下载");
+      else if (job?.status === "done") html += `<p>已安装。Survival LLM 正在重启到新版本…</p>`;
       else if (a.blocker) html += `<p>${esc(a.blocker)}</p>
-        <p><a href="${esc(r.download_page)}" target="_blank" rel="noopener">Get the new version from the website</a></p>`;
+        <p><a href="${esc(r.download_page)}" target="_blank" rel="noopener">从网站获取新版本</a></p>`;
       else html += `${job?.status === "error" || updateError ? `<p class="error">${esc(updateError || job.error)}</p>` : ""}
-        <button class="primary" type="button" id="install-update">Update now</button>
-        <p class="meta">Survival LLM downloads the new version, closes, and opens again a few seconds later. Your AI models,
-          library, files and settings stay as they are.</p>`;
+        <button class="primary" type="button" id="install-update">立即更新</button>
+        <p class="meta">Survival LLM 会下载新版本，关闭，几秒后重新打开。你的 AI 模型、知识库、文件和设置都保持不变。</p>`;
     } else if (r.error) {
-      html += `<p>${r.error === "offline" ? "Couldn't check for updates (no internet?)." : "Couldn't check for updates right now."}
-        Survival LLM works fine without them. You have version ${esc(r.version)}.</p>`;
+      html += `<p>${r.error === "offline" ? "无法检查更新（可能是没有联网）。" : "暂时无法检查更新。"}
+        没有更新也不影响 Survival LLM 使用。你用的是 ${esc(r.version)} 版本。</p>`;
     } else {
-      html += `<p>You have the latest version of Survival LLM (${esc(r.version)}).</p>`;
+      html += `<p>你用的是最新版本（${esc(r.version)}）。</p>`;
     }
     if (r.library) {
       const lib = jobFor(`library:${r.library.id}`);
-      html += `<h3>A newer library is available</h3>${r.library.notes ? `<p>${esc(r.library.notes)}</p>` : ""}
-        <p class="meta">${esc(r.library.label)}, from ${esc(day(r.library.version))}.</p>`;
-      if (busy(lib)) html += progressHTML(lib, "Downloading the new library", "Library update");
-      else if (lib?.status === "done") html += `<p>Your library is up to date.</p>`;
+      html += `<h3>有更新版本的知识库</h3>${r.library.notes ? `<p>${esc(r.library.notes)}</p>` : ""}
+        <p class="meta">${esc(packNames[r.library.id]?.name || r.library.label)}，发布于 ${esc(day(r.library.version))}。</p>`;
+      if (busy(lib)) html += progressHTML(lib, "正在下载新的知识库", "知识库更新");
+      else if (lib?.status === "done") html += `<p>你的知识库已是最新。</p>`;
       else html += `${lib?.status === "error" ? `<p class="error">${esc(lib.error)}</p>` : ""}
-        <button class="ghost" type="button" id="update-library">Update the library (${esc(size(r.library.gb))})</button>
-        <p class="meta">Your current library keeps working until the new one is ready, and your own files stay.</p>`;
+        <button class="ghost" type="button" id="update-library">更新知识库（${esc(size(r.library.gb))}）</button>
+        <p class="meta">新的知识库就绪前，当前知识库继续可用，你自己的文件不受影响。</p>`;
     }
-    if (state?.library) html += `<p class="meta">To switch between Essentials and Everything, or move the library:
-      <button class="link" type="button" id="updates-library">Library window</button>.</p>`;
-    if (r.checked) html += `<p class="meta">Last checked ${esc(new Date(r.checked * 1000).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }))}.</p>`;
+    if (state?.library) html += `<p class="meta">要在必备包（Essentials）和全量包（Everything）之间切换，或移动知识库：
+      <button class="link" type="button" id="updates-library">知识库窗口</button>。</p>`;
+    if (r.checked) html += `<p class="meta">上次检查：${esc(new Date(r.checked * 1000).toLocaleString("zh-CN", { dateStyle: "medium", timeStyle: "short" }))}。</p>`;
   }
   if (html === updatesSig) return;  // rebuilding an unchanged window would knock keyboard focus off its buttons
   updatesSig = html;
@@ -1429,7 +1416,7 @@ async function installUpdate() {
   try {
     const resp = await api("/api/update/app", { method: "POST", body: "{}" });
     if (resp.ok) restarting = true;
-    else updateError = (await resp.json()).error || "The update couldn't start. Try again.";
+    else updateError = (await resp.json()).error || "更新无法开始。请重试。";
   } catch { return; }
   renderUpdates();
   loadStatus();
@@ -1456,7 +1443,7 @@ function memoryCount() {
   const chars = lines.reduce((n, l) => n + l.length + 1, 0);
   const over = chars > memoryMax;
   $("memory-count").textContent = lines.length
-    ? `${lines.length} note${lines.length === 1 ? "" : "s"} · ${chars.toLocaleString()} of ${memoryMax.toLocaleString()} characters`
+    ? `${lines.length} 条 · ${chars.toLocaleString("zh-CN")} / ${memoryMax.toLocaleString("zh-CN")} 字符`
     : "";
   $("memory-count").classList.toggle("error", over);
   $("memory-save").disabled = over;
@@ -1472,13 +1459,13 @@ async function openMemory() {
     memoryMax = m.max_chars;
     $("memory-writes").checked = m.ai_writes;
     if (memoryEdited()) {
-      $("memory-status").textContent = "These are your unsaved changes. Save keeps them, along with anything the AI changed since.";
+      $("memory-status").textContent = "这些是你未保存的修改。保存会保留它们，同时保留 AI 在此期间所做的改动。";
     } else {
       memoryBase = m.text;
       $("memory-text").value = m.text;
     }
   } catch (err) {
-    if (!(err instanceof StaleTab)) $("memory-status").textContent = "Couldn't load the memory.";
+    if (!(err instanceof StaleTab)) $("memory-status").textContent = "无法读取记忆。";
   }
   memoryCount();
   if (!memoryDialog.open) memoryDialog.showModal();
@@ -1487,25 +1474,25 @@ async function openMemory() {
 // The AI changed its notes while the window is open: show them if nothing was edited, else say Save will merge.
 async function memoryChangedWhileOpen() {
   if (!memoryEdited()) return openMemory();
-  $("memory-status").textContent = "The AI just changed its notes. Save keeps your edits and its changes.";
+  $("memory-status").textContent = "AI 刚刚改动了条目。保存会同时保留你的修改和它的改动。";
 }
 
 async function saveMemory(text, done) {
-  $("memory-status").textContent = "Saving…";
+  $("memory-status").textContent = "正在保存…";
   try {
     const resp = await api("/api/memory", { method: "POST", body: JSON.stringify({ text, base: memoryBase }) });
     const m = await resp.json();
-    if (!resp.ok) { $("memory-status").textContent = m.error || "Couldn't save."; return; }
+    if (!resp.ok) { $("memory-status").textContent = m.error || "无法保存。"; return; }
     memoryBase = m.text;
     $("memory-text").value = m.text;
-    const n = (k) => (k === 1 ? "a note" : `${k} notes`);
-    const kept = m.kept.length ? ` Also kept ${n(m.kept.length)} the AI saved while you were editing.` : "";
-    const dropped = m.dropped.length ? ` Left out ${n(m.dropped.length)} the AI deleted or changed meanwhile.` : "";
+    const n = (k) => `${k} 条`;
+    const kept = m.kept.length ? ` 同时保留了你编辑期间 AI 保存的 ${n(m.kept.length)}。` : "";
+    const dropped = m.dropped.length ? ` 未包含 AI 在此期间删除或改动的 ${n(m.dropped.length)}。` : "";
     $("memory-status").textContent = done + kept + dropped;
   } catch (err) {
     $("memory-status").textContent = err instanceof StaleTab
-      ? "Not saved: Survival LLM restarted. Copy your edits, then reload the page."
-      : "Couldn't save. Is Survival LLM still running?";
+      ? "未保存：Survival LLM 已重启。请先复制你的修改，然后重新加载页面。"
+      : "无法保存。Survival LLM 还在运行吗？";
   }
   memoryCount();
 }
@@ -1513,23 +1500,23 @@ async function saveMemory(text, done) {
 $("memory-btn").onclick = openMemory;
 $("close-memory").onclick = () => memoryDialog.close();
 $("memory-text").oninput = memoryCount;
-$("memory-save").onclick = () => saveMemory($("memory-text").value, "Saved. Used from your next question.");
+$("memory-save").onclick = () => saveMemory($("memory-text").value, "已保存。从你的下一个问题开始生效。");
 $("memory-clear").onclick = (e) => {
-  if (!confirmClick(e.currentTarget, "Click again to delete every note")) return;
-  saveMemory("", "Deleted all notes.");
+  if (!confirmClick(e.currentTarget, "再点一次会删除所有条目")) return;
+  saveMemory("", "已删除所有条目。");
 };
 $("memory-writes").onchange = async (e) => {
   const on = e.target.checked;
   try {
     const resp = await api("/api/memory/ai-writes", { method: "POST", body: JSON.stringify({ on }) });
     const m = await resp.json();
-    if (!resp.ok) { e.target.checked = !on; $("memory-status").textContent = m.error || "Couldn't change that."; return; }
+    if (!resp.ok) { e.target.checked = !on; $("memory-status").textContent = m.error || "无法更改。"; return; }
     e.target.checked = m.ai_writes;
-    $("memory-status").textContent = m.ai_writes ? "The AI can add and change notes again."
-      : "The AI won't add or change notes now. It still reads the ones here.";
+    $("memory-status").textContent = m.ai_writes ? "AI 可以再次添加和修改条目了。"
+      : "AI 现在不会添加或修改条目。它仍然会读取这里的条目。";
   } catch (err) {
     e.target.checked = !on;
-    if (!(err instanceof StaleTab)) $("memory-status").textContent = "Couldn't change that. Is Survival LLM still running?";
+    if (!(err instanceof StaleTab)) $("memory-status").textContent = "无法更改。Survival LLM 还在运行吗？";
   }
 };
 
@@ -1541,9 +1528,9 @@ $("prompt-btn").onclick = async () => {
     const p = await (await api("/api/prompt")).json();
     promptDefault = p.default;
     $("prompt-text").value = p.custom || p.default;
-    $("prompt-status").textContent = p.custom ? "Using your edited instructions." : "Using the original instructions.";
+    $("prompt-status").textContent = p.custom ? "正在使用你修改过的指令。" : "正在使用原始指令。";
   } catch {
-    $("prompt-status").textContent = "Couldn't load the instructions.";
+    $("prompt-status").textContent = "无法读取指令。";
   }
   $("prompt-dialog").showModal();
 };
@@ -1553,22 +1540,22 @@ async function savePrompt(body, done) {
     $("prompt-text").value = p.custom || promptDefault;
     $("prompt-status").textContent = done;
   } catch {
-    $("prompt-status").textContent = "Couldn't save. Is Survival LLM still running?";
+    $("prompt-status").textContent = "无法保存。Survival LLM 还在运行吗？";
   }
 }
 $("prompt-save").onclick = () => {
   const text = $("prompt-text").value.trim();
-  savePrompt(text === promptDefault.trim() ? { reset: true } : { text }, "Saved. Used from your next question.");
+  savePrompt(text === promptDefault.trim() ? { reset: true } : { text }, "已保存。从你的下一个问题开始生效。");
 };
-$("prompt-reset").onclick = () => savePrompt({ reset: true }, "Back to the original instructions.");
+$("prompt-reset").onclick = () => savePrompt({ reset: true }, "已恢复为原始指令。");
 $("close-prompt").onclick = () => $("prompt-dialog").close();
 els.dialog.onclick = (e) => { if (e.target === els.dialog) els.dialog.close(); };  // click outside closes
 $("quit").onclick = async (e) => {
-  if (!confirmClick(e.currentTarget, "Click again to quit")) return;
+  if (!confirmClick(e.currentTarget, "再点一次退出")) return;
   try { await api("/api/quit", { method: "POST", body: "{}" }); } catch { /* already stopped */ }
   clearTimeout(pollTimer);
   document.body.innerHTML = `<div class="welcome" style="max-width:640px;margin:10vh auto;padding:0 16px">
-    <h1>Survival LLM has stopped.</h1><p>You can close this window. Open Survival LLM again to start it.</p></div>`;
+    <h1>Survival LLM 已停止。</h1><p>可以关闭这个窗口了。要再次使用，请重新打开 Survival LLM。</p></div>`;
 };
 loadStatus();
 els.input.focus();

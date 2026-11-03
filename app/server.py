@@ -64,29 +64,24 @@ MIME = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=ut
 CATALOG = [
     {"key": "nemotron-super", "name": "Nemotron 3.5 Super", "maker": "NVIDIA", "min_ram": 128,
      "mac": "nemotron-3.5-super:120b-a12b-nvfp4", "win": "nemotron-3.5-super:120b-a12b", "gb": {"mac": 80, "win": 90},
-     "blurb": {"mac": "The smartest option: knows the most and is the least likely to make things up. Quick on Apple Silicon.",
-               "win": "The smartest option: knows the most and is the least likely to make things up. Needs a powerful PC."}},
+     "blurb": {"mac": "最聪明的选择：知道得最多，也最不容易编造。在 Apple Silicon 上很快。",
+               "win": "最聪明的选择：知道得最多，也最不容易编造。需要一台性能很强的电脑。"}},
     {"key": "qwen-27b", "name": "Qwen3.8 27B", "maker": "Alibaba", "min_ram": 32,
      "mac": "qwen3.8:27b-mlx", "win": "qwen3.8:27b", "gb": {"mac": 18, "win": 18},
-     "blurb": {"mac": "Careful and thorough: looks things up for every question. A great fit for 32-64 GB Macs.",
-               "win": "Careful and thorough, but slow unless your PC has a graphics card with 24 GB of memory."}},
+     "blurb": {"mac": "细致、周全：每个问题都会去查资料。很适合 32-64 GB 的 Mac。",
+               "win": "细致、周全，但除非你的电脑有 24 GB 显存的显卡，否则会比较慢。"}},
     {"key": "nemotron-lightning", "name": "Nemotron 3.5 Lightning", "maker": "NVIDIA", "min_ram": 32,
      "mac": "nemotron-3.5-lightning:30b-a3b-nvfp4", "win": "nemotron-3.5-lightning:30b-a3b", "gb": {"mac": 19, "win": 25},
-     "blurb": {"mac": "The fastest: answers in a few seconds and saves battery. Sometimes misses details.",
-               "win": "The best choice for most PCs: accurate and careful. Expect up to a minute per answer "
-                      "on a typical PC."}},
+     "blurb": {"mac": "最快：几秒就给出回答，也省电。有时会漏掉细节。",
+               "win": "大多数电脑的最佳选择：准确、细致。在一般电脑上一次回答可能要等将近一分钟。"}},
     {"key": "granite-8b", "name": "Granite 4.2 8B", "maker": "IBM", "min_ram": 12,
      "mac": "granite4.2:8b", "win": "granite4.2:8b", "gb": {"mac": 6, "win": 6},
-     "blurb": {"mac": "For 16 GB computers. Always looks things up and shows its sources, but makes more mistakes "
-                      "than the bigger models, so check the source.",
-               "win": "For 16 GB computers. Always looks things up and shows its sources, but makes more mistakes "
-                      "than the bigger models, so check the source."}},
+     "blurb": {"mac": "适合 16 GB 内存的电脑。每次都会查资料并给出来源，但比大模型出错更多，请核对来源。",
+               "win": "适合 16 GB 内存的电脑。每次都会查资料并给出来源，但比大模型出错更多，请核对来源。"}},
     {"key": "gemma-e4b", "name": "Gemma 4 E4B", "maker": "Google", "min_ram": 12,
      "mac": "gemma4:latest", "win": "gemma4:latest", "gb": {"mac": 10, "win": 10},
-     "blurb": {"mac": "Small and very fast, for 16 GB computers. Often answers from memory instead of the library, "
-                      "so check what it says.",
-               "win": "Small and very fast, for 16 GB computers. Often answers from memory instead of the library, "
-                      "so check what it says."}},
+     "blurb": {"mac": "又小又快，适合 16 GB 内存的电脑。常常凭记忆回答而不是查知识库，请核对自己看到的内容。",
+               "win": "又小又快，适合 16 GB 内存的电脑。常常凭记忆回答而不是查知识库，请核对自己看到的内容。"}},
 ]
 # Order = what to recommend first, from the blind-judged tests in evals/ (README "How the models did").
 # Granite 4.2 3B was dropped: 5 of its 22 test answers could hurt someone, 2 of them fatally.
@@ -126,10 +121,10 @@ def save_failed(exc, path):
     """What to tell the person when the memory or settings file couldn't be written (it goes to app.log too)."""
     print(f"Couldn't save {path}: {exc}", file=sys.stderr)
     if getattr(exc, "errno", None) == errno.ENOSPC:
-        return "Couldn't save: the disk is full. Free some space and try again."
+        return "保存失败：磁盘已满。清理一些空间后再试。"
     if os.name == "nt" and isinstance(exc, PermissionError):  # Windows refuses while another program has it open
-        return f"Couldn't save: another program is using {path}. Close it and try again."
-    return f"Couldn't save {path}: {getattr(exc, 'strerror', None) or exc}."
+        return f"保存失败：另一个程序正在使用 {path}。关闭它后再试。"
+    return f"保存失败（{path}）：{getattr(exc, 'strerror', None) or exc}。"
 MAX_UPLOAD = 4 * 1024 ** 3
 my_files_checked = [0.0]  # when the folder was last looked at
 
@@ -179,8 +174,8 @@ def _dev_label(value):
         branch, commit = git("rev-parse", "--abbrev-ref", "HEAD"), git("rev-parse", "--short", "HEAD")
         changed = git("status", "--porcelain", "--untracked-files=no")
     except (OSError, subprocess.SubprocessError):
-        return "dev copy"
-    return f"{branch} @ {commit}" + (", with uncommitted changes" if changed else "") if commit else "dev copy"
+        return "开发副本"
+    return f"{branch} @ {commit}" + ("，有未提交的改动" if changed else "") if commit else "开发副本"
 
 
 DEV = _dev_label(os.environ.get("SURVIVAL_LLM_DEV"))
@@ -548,17 +543,16 @@ def engine_too_old():
     running, own = running_engine() or {}, own_engine_version()
     if running.get("ours"):
         if sys.platform == "darwin":
-            return ("This model needs a newer AI engine than the one built into this version of Survival LLM. Check for "
-                    "updates (at the bottom of the window); until then, pick another model under Model.")
-        return "This model needs a newer AI engine than the one Survival LLM installed. Pick another model under Model."
-    have = f" (version {running['version']})" if running.get("version") else ""
+            return ("这个模型需要的 AI 引擎比这个版本 Survival LLM 自带的更新。请检查更新（在窗口底部）；"
+                    "在那之前，请在“模型”里换一个模型。")
+        return "这个模型需要的 AI 引擎比 Survival LLM 安装的更新。请在“模型”里换一个模型。"
+    have = f"（版本 {running['version']}）" if running.get("version") else ""
     if own and running.get("version") and version_tuple(own) > version_tuple(running["version"]):
-        where = "in the menu bar" if sys.platform == "darwin" else "by the clock"
-        return (f"This model needs a newer AI engine than the Ollama app running on this computer{have}. Quit Ollama "
-                f"(its icon {where}) and open Survival LLM again: it then uses its own engine (version {own}), which "
-                "can download it. Or update Ollama at ollama.com/download.")
-    return (f"This model needs a newer AI engine than the Ollama running on this computer{have}. Update Ollama at "
-            "ollama.com/download, then try again.")
+        where = "菜单栏" if sys.platform == "darwin" else "时钟旁边"
+        return (f"这个模型需要的 AI 引擎比这台电脑上正在运行的 Ollama 更新{have}。请退出 Ollama"
+                f"（它在{where}的图标），再打开 Survival LLM：之后它会用自己的引擎（版本 {own}），"
+                "可以下载这个模型。或者在 ollama.com/download 更新 Ollama。")
+    return (f"这个模型需要的 AI 引擎比这台电脑上运行的 Ollama 更新{have}。请到 ollama.com/download 更新 Ollama，然后再试。")
 
 
 def loaded_models():
@@ -579,21 +573,21 @@ def friendly_error(exc):
             detail = ""
         low = detail.lower()
         if exc.code == 404 or "not found" in low:
-            return "This model isn't installed. Open Model at the top to download it or pick another."
+            return "这个模型还没有安装。打开顶部的“模型”下载它，或者换一个模型。"
         if "newer version" in low or "requires" in low and "ollama" in low:
             return engine_too_old()
         if "memory" in low:
-            return "There isn't enough free memory for this model. Close other apps, or pick a smaller model under Model."
-        return f"The AI engine reported a problem: {detail or exc.reason}."
+            return "没有足够的空闲内存运行这个模型。请关闭其他应用，或在“模型”里换一个更小的模型。"
+        return f"AI 引擎报错：{detail or exc.reason}。"
     if getattr(exc, "errno", None) == errno.ENOSPC:
-        return "The disk is full. Free up some space, then try again."
+        return "磁盘已满。清理一些空间后再试。"
     reason = getattr(exc, "reason", exc)
     if isinstance(reason, ConnectionRefusedError) or "refused" in str(reason).lower():
         start_ollama()
-        return "The AI engine (Ollama) isn't running. Starting it now; try again in a few seconds."
+        return "AI 引擎（Ollama）没有在运行。正在启动，请几秒后再试。"
     if "timed out" in str(reason).lower():
-        return "The AI engine took too long to answer. Try again, or pick a faster model under Model."
-    return f"Something went wrong: {exc}"
+        return "AI 引擎响应超时。请重试，或在“模型”里换一个更快的模型。"
+    return f"出错了：{exc}"
 
 
 # ---------- background jobs: model downloads, library installs, warm-up ----------
@@ -626,38 +620,37 @@ def download_error(exc):
     person has to do something first, such as free up disk space)."""
     text = str(exc)
     if isinstance(exc, OSError) and getattr(exc, "errno", None) == errno.ENOSPC:
-        return "The disk is full. Free up some space, then try again.", None
+        return "磁盘已满。清理一些空间后再试。", None
     if isinstance(exc, urllib.error.HTTPError):
         if str(getattr(exc, "url", "") or "").startswith(HOST):
             return friendly_error(exc), "again"
-        return f"The download site answered with an error (HTTP {exc.code}).", "again"
+        return f"下载站点返回了错误（HTTP {exc.code}）。", "again"
     reason = getattr(exc, "reason", exc)
     if isinstance(reason, ConnectionRefusedError):  # the AI engine went away mid-download
         start_ollama()
-        return "The AI engine stopped. Starting it again.", "network"
+        return "AI 引擎已停止，正在重新启动。", "network"
     if isinstance(reason, ssl.SSLCertVerificationError):
-        return ("Couldn't check the download site's security certificate (a company network or antivirus may be in "
-                "the way)."), None
+        return ("无法核对下载站点的安全证书（可能是公司网络或杀毒软件拦住了）。"), None
     if isinstance(exc, (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError, ssl.SSLError,
                         socket.gaierror)) or getattr(exc, "errno", None) in NETWORK_ERRNOS:
-        return "The internet connection dropped.", "network"
+        return "网络连接中断了。", "network"
     if isinstance(exc, OSError):  # the disk, not the internet: say which file and why, and don't keep retrying
-        where = f" ({exc.filename})" if getattr(exc, "filename", None) else ""
+        where = f"（{exc.filename}）" if getattr(exc, "filename", None) else ""
         if exc.errno == errno.EFBIG:
-            return (f"That drive can't hold files this big{where}. It's probably formatted as FAT32: pick another "
-                    "drive, or reformat it as exFAT."), None
+            return (f"那个磁盘放不下这么大的文件{where}。它可能是 FAT32 格式：请换一个磁盘，"
+                    "或者把它格式化成 exFAT。"), None
         if exc.errno == errno.EROFS:
-            return f"That drive is read-only{where}. Pick another place for the library.", None
+            return f"那个磁盘是只读的{where}。请给知识库换一个位置。", None
         if isinstance(exc, (PermissionError, FileNotFoundError)):
-            return (f"Survival LLM can't save there{where}. If the library is on a drive, plug it in; or move the "
-                    "library somewhere else (Library window)."), None
-        return f"Couldn't save the download{where}: {exc.strerror or exc}.", None
+            return (f"Survival LLM 无法保存到那里{where}。如果知识库在一块移动硬盘上，请把它插上；"
+                    "或者把知识库移到别的地方（知识库窗口）。"), None
+        return f"下载的文件保存失败{where}：{exc.strerror or exc}。", None
     low = text.lower()
-    if "not enough free disk" in low or "no space" in low:
+    if "not enough free disk" in low or "no space" in low or "磁盘空间不足" in text:
         return text, None
-    if "damaged in transit" in low:
+    if "damaged in transit" in low or "传输过程中损坏" in text:
         return text, "again"
-    if "check the internet" in low:
+    if "check the internet" in low or "检查网络连接" in text:
         return text, "network"
     if text.startswith("Download failed:"):  # Ollama's own words for a model download that stopped
         if "newer version" in low:
@@ -666,7 +659,7 @@ def download_error(exc):
             return text, None
         if any(w in low for w in ("connection", "timeout", "timed out", "eof", "reset", "dial tcp", "no such host",
                                   "tls", "temporary", "network")):
-            return "The internet connection dropped.", "network"
+            return "网络连接中断了。", "network"
         return text, "again"
     return text, None
 
@@ -770,18 +763,18 @@ def engine_worker(key):
     """Download and unpack the app's own Ollama (Windows), then start it."""
     info = engine_info()
     if not info or not ENGINE:
-        raise RuntimeError("This version of the app can't download the AI engine. Install Ollama from ollama.com.")
+        raise RuntimeError("这个版本的应用无法下载 AI 引擎。请从 ollama.com 安装 Ollama。")
     need = info["bytes"] * 2.5 / 1e9 + DISK_MARGIN_GB  # the zip plus its unpacked copy, briefly at the same time
     if need > disk_free_gb():
-        raise RuntimeError(f"Not enough free disk space: installing the AI engine needs about {need:.0f} GB free, "
-                           f"and this computer has {disk_free_gb()} GB.")
+        raise RuntimeError(f"磁盘空间不足：安装 AI 引擎需要约 {need:.0f} GB 可用空间，"
+                           f"而这台电脑只有 {disk_free_gb()} GB。")
     folder = os.path.dirname(ENGINE)
     zip_path, partial = folder + ".zip", folder + ".partial"
     os.makedirs(os.path.dirname(folder), exist_ok=True)
     _download(key, info["url"], zip_path, info["bytes"])
     if _sha256(zip_path) != info["sha256"]:
         os.remove(zip_path)
-        raise RuntimeError("The AI engine download was damaged in transit. Try again.")
+        raise RuntimeError("AI 引擎在传输过程中损坏了，请重试。")
     _update(key, status="unpacking", completed=info["bytes"], total=info["bytes"])
     shutil.rmtree(partial, ignore_errors=True)
     with zipfile.ZipFile(zip_path) as z:
@@ -826,7 +819,7 @@ class PackParts(io.RawIOBase):
             self.file.seek(self.pos - self.starts[n])
             got = self.file.readinto(view[done:done + self.starts[n] + self.sizes[n] - self.pos])
             if not got:
-                raise OSError(f"{self.paths[n]} is shorter than it was")
+                raise OSError(f"{self.paths[n]} 比原来短了（文件被改动，或没下载完）")
             done += got
             self.pos += got
         return done
@@ -853,10 +846,10 @@ def library_worker(key, pack_id):
     """Download a pack's parts (resumable, checksummed), then unzip straight from them into the library folder."""
     pack = next((p for p in library_packs() if p["id"] == pack_id), None)
     if not pack:
-        raise RuntimeError("That library pack isn't available. Check the internet connection.")
+        raise RuntimeError("这个知识库包不可用，请检查网络连接。")
     if os.path.isdir(LIB) and not os.path.islink(LIB) and not only_library(LIB):
-        raise RuntimeError(f"The library's folder ({LIB}) has other files in it too, so Survival LLM won't replace it. "
-                           "Move the library to a folder of its own first (Library window, Move it…).")
+        raise RuntimeError(f"知识库所在的文件夹（{LIB}）里还有其他文件，所以 Survival LLM 不会替换它。"
+                           "请先把知识库移到它自己的文件夹里（知识库窗口，移动…）。")
     work, partial = LIB + ".download", LIB + ".partial"
     shutil.rmtree(partial, ignore_errors=True)  # left by an install that stopped while unpacking
     os.makedirs(work, exist_ok=True)
@@ -871,8 +864,8 @@ def library_worker(key, pack_id):
     have = sum(os.path.getsize(p) for p in paths if os.path.exists(p))
     need = (peak - have) / 1e9 + DISK_MARGIN_GB
     if need > disk_free_gb(os.path.dirname(LIB)):
-        raise RuntimeError(f"Not enough free disk space: installing this pack needs about {need:.0f} GB free, "
-                           f"and this computer has {disk_free_gb(os.path.dirname(LIB))} GB.")
+        raise RuntimeError(f"磁盘空间不足：安装这个知识库包需要约 {need:.0f} GB 可用空间，"
+                           f"而这台电脑只有 {disk_free_gb(os.path.dirname(LIB))} GB。")
     done_before, stop = 0, cancels.get(key)
     for n, (part, path) in enumerate(zip(pack["parts"], paths)):
         if stop is not None and stop.is_set():
@@ -880,7 +873,7 @@ def library_worker(key, pack_id):
         _download(key, part["url"], path, part["bytes"], done_before, total)
         if _sha256(path) != part["sha256"]:
             os.remove(path)
-            raise RuntimeError(f"Part {n + 1} of {len(pack['parts'])} was damaged in transit. Try again to re-download it.")
+            raise RuntimeError(f"第 {n + 1}/{len(pack['parts'])} 部分在传输过程中损坏了。请重试以重新下载。")
         done_before += part["bytes"]
     if stop is not None and stop.is_set():
         raise Cancelled()
@@ -916,8 +909,7 @@ def library_worker(key, pack_id):
         except OSError:
             if os.path.isdir(old) and not os.path.exists(LIB):
                 os.rename(old, LIB)
-            raise RuntimeError("Couldn't swap in the new library. Close any window showing the library folder, "
-                               "then try again.") from None
+            raise RuntimeError("无法换上新知识库。请关掉正在显示知识库文件夹的窗口，然后再试一次。") from None
         lib_version[0] += 1
     shutil.rmtree(old, ignore_errors=True)
     shutil.rmtree(work, ignore_errors=True)
@@ -967,8 +959,7 @@ def use_library_dir(path, move_from=None):
                 try:
                     os.rename(move_from, path)
                 except OSError:
-                    raise RuntimeError("Couldn't move the library. Close any window showing its folder, then try "
-                                       "again.") from None
+                    raise RuntimeError("无法移动知识库。请关掉正在显示知识库文件夹的窗口，然后再试一次。") from None
             search.use_folder(path)
             LIB, DB_PATH = search.LIB, search.DB_PATH
         finally:
@@ -979,11 +970,11 @@ def use_library_dir(path, move_from=None):
 def folder_problem(folder):
     """Why a folder the person picked can't be used, or None."""
     if not os.path.isabs(folder):
-        return "Pick a folder."
+        return "请选择一个文件夹。"
     if not os.path.isdir(folder):
-        return "That folder doesn't exist (is the drive plugged in?)."
+        return "那个文件夹不存在（移动硬盘插上了吗？）。"
     if not writable(folder):
-        return "Survival LLM can't save to that folder. Pick another one."
+        return "Survival LLM 无法保存到那个文件夹。请换一个。"
     return None
 
 
@@ -1052,18 +1043,18 @@ def move_worker(key, target):
         if os.path.isdir(target) and not os.listdir(target):
             os.rmdir(target)  # an empty folder they made for it
         else:
-            raise RuntimeError("There's already a folder called Survival LLM Library there. Pick another folder.")
+            raise RuntimeError("那里已经有一个叫 Survival LLM Library 的文件夹了。请换一个文件夹。")
     real = os.path.realpath(source)
     if os.path.realpath(target).startswith(real + os.sep):
-        raise RuntimeError("That folder is inside the library itself. Pick a folder outside it.")
+        raise RuntimeError("那个文件夹在知识库内部。请选知识库之外的文件夹。")
     same_disk = not os.path.islink(source) and only_library(source) and same_device(real, os.path.dirname(target))
     if same_disk:
         use_library_dir(target, move_from=source)
         return
     total = folder_bytes(real)
     if total / 1e9 + 1 > disk_free_gb(os.path.dirname(target)):
-        raise RuntimeError(f"Not enough free space there: the library needs about {total / 1e9 + 1:.0f} GB, and that "
-                           f"drive has {disk_free_gb(os.path.dirname(target))} GB free.")
+        raise RuntimeError(f"那里的可用空间不够：知识库需要约 {total / 1e9 + 1:.0f} GB，"
+                           f"而那块磁盘只剩 {disk_free_gb(os.path.dirname(target))} GB。")
     partial, done = target + ".partial", 0
     shutil.rmtree(partial, ignore_errors=True)
     _update(key, status="downloading", completed=0, total=total)
@@ -1155,8 +1146,7 @@ def setup_step(plan):
         busy = library_busy()
         if busy and busy != f"library:{pack}":
             return "wait", "library-busy"
-        label = next((p["label"] for p in library_packs() if p["id"] == pack), pack)
-        return "library", f"library:{pack}", label, library_worker, (pack,)
+        return "library", f"library:{pack}", pack_label(pack), library_worker, (pack,)
     model = plan.get("model")
     if not model:
         return None
@@ -1167,7 +1157,7 @@ def setup_step(plan):
             start_ollama()
             return "wait", "engine-starting"
         if engine_info() and ENGINE:
-            return "engine", "engine", "AI engine (Ollama)", engine_worker, ()
+            return "engine", "engine", "AI 引擎 (Ollama)", engine_worker, ()
         return "wait", "install-engine"
     if model.removesuffix(":latest") not in {m.removesuffix(":latest") for m in models}:
         return "model", f"model:{model}", friendly_name(model), pull_worker, (model,)
@@ -1269,12 +1259,30 @@ def setup_status():
             "retry_in": max(0, round(setup_state["retry_at"] - time.time()))}
 
 
+# What each pack is called on screen. The published manifest (docs/library-packs.json) keeps English labels, and
+# pack_summary() parses them with ":" and " (" when it has no entry here, so a new pack from a newer manifest still
+# shows something. Labels put together here use plain ":" and "(" for that same reason.
+PACK_TEXT = {"lite": ("必备包", "医学、急救、生存、操作与维修"),
+             "full": ("全量包", "必备包，另有约 93 万篇最常读的维基百科条目和 iFixit")}
+
+
+def pack_label(pack_id):
+    """What to call a pack in a download's progress line: our name for it, else the label the manifest published."""
+    if pack_id in PACK_TEXT:
+        return PACK_TEXT[pack_id][0]
+    return next((p["label"] for p in library_packs() if p["id"] == pack_id), pack_id)
+
+
 def pack_summary(pack):
     """A pack as the setup screen shows it: its name, what is in it, and the disk space it needs while installing."""
-    name, _, rest = pack["label"].partition(":")
-    about = rest.split(" (")[0].strip()
+    if pack["id"] in PACK_TEXT:
+        name, about = PACK_TEXT[pack["id"]]
+    else:
+        name, _, rest = pack["label"].partition(":")
+        about = rest.split(" (")[0].strip()
+        about = about[:1].upper() + about[1:]
     return {"id": pack["id"], "label": pack["label"], "gb": pack["gb"], "name": name.strip(),
-            "about": about[:1].upper() + about[1:], "articles": pack.get("articles"),
+            "about": about, "articles": pack.get("articles"),
             "disk_gb": math.ceil((pack.get("install_bytes") or pack["gb"] * 3.5e9) / 1e9)}
 
 
@@ -1440,15 +1448,15 @@ def writable(folder):
 def update_blocker():
     """Why this copy can't update itself, as a sentence for the person; None if it can."""
     if DEV:
-        return "This is a dev copy of Survival LLM (started with bin/dev), so it doesn't update itself."
+        return "这是 Survival LLM 的开发副本（用 bin/dev 启动的），所以它不会自动更新。"
     where = install_location()
     if where is None:
         if "/AppTranslocation/" in ROOT:
-            return ("macOS is running Survival LLM from a temporary copy. Move it to your Applications folder (drag it "
-                    "there in Finder), open it from there, and check again.")
-        return "This copy of Survival LLM runs from its source code, so it can't update itself. Update it with git pull."
+            return ("macOS 正在从一个临时副本运行 Survival LLM。请把它移到“应用程序”文件夹（在访达里拖过去），"
+                    "从那里打开，然后再检查一次。")
+        return "这份 Survival LLM 是从源代码运行的，所以无法自己更新。请用 git pull 更新。"
     if not writable(os.path.dirname(where)):
-        return "Survival LLM can't replace itself in the folder it's in. Download the new version from the website."
+        return "Survival LLM 无法在自己所在的文件夹里替换自己。请从网站下载新版本。"
     return None
 
 
@@ -1462,7 +1470,7 @@ def update_report():
                          "gb": round(app[platform_key()]["bytes"] / 1e9, 3), "blocker": update_blocker()}
     try:
         with open(UPDATE_FAILED, encoding="utf-8-sig") as f:
-            report["failed"] = f.read().strip() or "no reason given"
+            report["failed"] = f.read().strip() or "没有给出原因"
         os.remove(UPDATE_FAILED)  # shown once
     except OSError:
         pass
@@ -1473,12 +1481,12 @@ def app_update_worker(key):
     """Download the new version, check it, put it in place of this copy, then restart into it."""
     app, blocker = newer_app(), update_blocker()
     if blocker or not app:
-        raise RuntimeError(blocker or "There's no newer version to install.")
+        raise RuntimeError(blocker or "没有可以安装的新版本。")
     pkg = app[platform_key()]
     need = pkg["bytes"] * 3 / 1e9 + 1
     if need > disk_free_gb():
-        raise RuntimeError(f"Not enough free disk space for the update: it needs about {need:.0f} GB free, "
-                           f"and this computer has {disk_free_gb()} GB.")
+        raise RuntimeError(f"磁盘空间不足，无法更新：需要约 {need:.0f} GB 可用空间，"
+                           f"而这台电脑只有 {disk_free_gb()} GB。")
     work = os.path.join(APP_DIR, "update")
     os.makedirs(work, exist_ok=True)
     zip_path = os.path.join(work, f"Survival-LLM-{re.sub(r'[^0-9.]', '', app['version'])}-{platform_key()}.zip")
@@ -1488,7 +1496,7 @@ def app_update_worker(key):
     _download(key, pkg["url"], zip_path, pkg["bytes"])
     if os.path.getsize(zip_path) != pkg["bytes"] or _sha256(zip_path) != pkg["sha256"]:
         os.remove(zip_path)
-        raise RuntimeError("The update was damaged in transit. Try again.")
+        raise RuntimeError("更新包在传输过程中损坏了，请重试。")
     _update(key, status="unpacking", completed=pkg["bytes"], total=pkg["bytes"])
     where = install_location()
     helper = install_mac(zip_path, where) if sys.platform == "darwin" else install_windows(zip_path, where)
@@ -1511,7 +1519,7 @@ def install_mac(zip_path, bundle):
         subprocess.run(["ditto", "-x", "-k", zip_path, staging], check=True, capture_output=True, timeout=900)
         new = os.path.join(staging, "Survival LLM.app")
         if subprocess.run(["codesign", "--verify", "--deep", new], capture_output=True, timeout=600).returncode:
-            raise RuntimeError("The update didn't pass macOS's signature check, so it wasn't installed.")
+            raise RuntimeError("更新包没有通过 macOS 的签名检查，所以没有安装。")
         old = os.path.join(staging, "Survival LLM (old version).app")
         os.rename(bundle, old)
         try:
@@ -1566,7 +1574,7 @@ def install_windows(zip_path, folder):
     new = os.path.join(staging, "Survival LLM")
     if not os.path.isfile(os.path.join(new, "python", "pythonw.exe")):
         shutil.rmtree(staging, ignore_errors=True)
-        raise RuntimeError("The update didn't contain the app, so it wasn't installed.")
+        raise RuntimeError("更新包里没有应用本体，所以没有安装。")
     script = base64.b64encode(WINDOWS_SWAP.encode("utf-16-le")).decode()
     return {"cmd": ["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-EncodedCommand", script],
             "env": {**os.environ, "SLLM_PID": str(os.getpid()), "SLLM_DIR": folder, "SLLM_NEW": new,
@@ -1739,8 +1747,8 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/memory":  # save the person's version of the notes; base: the text they started from
             text = str(body.get("text") or "")
             if notes_size(parse_notes(text)) > MEMORY_MAX:
-                return self._send(400, {"error": f"That's more than memory holds ({MEMORY_MAX:,} characters). Shorten "
-                                                 "some notes, or put longer things in Your files."})
+                return self._send(400, {"error": f"这超过了记忆的容量（{MEMORY_MAX:,} 字符）。请精简一些条目，"
+                                                 "或把较长的内容放进“我的文件”。"})
             base = body.get("base")
             try:
                 notes, kept, dropped = MEMORY.save_text(text, base if isinstance(base, str) else None)
@@ -1771,11 +1779,11 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/myfiles/remove":
             path = my_file_path(body.get("name", ""))
             if not path:
-                return self._send(404, {"error": "That file isn't in the folder any more."})
+                return self._send(404, {"error": "那个文件已经不在文件夹里了。"})
             try:
                 to_trash(path)
             except Exception:
-                return self._send(500, {"error": "Couldn't move it to the " + ("Recycle Bin." if os.name == "nt" else "Trash.")})
+                return self._send(500, {"error": "无法把它移到" + ("回收站。" if os.name == "nt" else "废纸篓。")})
             check_my_files()
             return self._send(200, {"ok": True})
         if url.path == "/api/library/open":  # show the library's folder in Finder or Explorer
@@ -1798,14 +1806,13 @@ class Handler(BaseHTTPRequestHandler):
             pack = str(body.get("pack", ""))
             busy = library_busy()
             if busy and busy != f"library:{pack}":
-                return self._send(409, {"error": "Another library download or move is running. Wait for it to finish."})
-            label = next((p["label"] for p in library_packs() if p["id"] == pack), pack)
-            started = start_job(f"library:{pack}", label, library_worker, pack)
+                return self._send(409, {"error": "另一个知识库下载或移动正在进行，请等它结束。"})
+            started = start_job(f"library:{pack}", pack_label(pack), library_worker, pack)
             return self._send(200 if started else 409, {"ok": started})
         if url.path == "/api/setup":  # the first-run choices: setup then downloads them in order, on its own
             pack = str(body.get("pack") or "") or None
             if pack and pack not in [p["id"] for p in library_packs()]:
-                return self._send(400, {"error": "That library pack isn't available. Check the internet connection."})
+                return self._send(400, {"error": "这个知识库包不可用，请检查网络连接。"})
             if model and model not in [c["model"] for c in machine_catalog(visible_models(installed_models()) or [])]:
                 return self._send(400, {"error": "unknown model"})
             if not (pack or model):
@@ -1825,14 +1832,14 @@ class Handler(BaseHTTPRequestHandler):
             if problem:
                 return self._send(400, {"error": problem})
             if library_busy():
-                return self._send(409, {"error": "Another library download or move is running. Wait for it to finish."})
+                return self._send(409, {"error": "另一个知识库下载或移动正在进行，请等它结束。"})
             target = library_target(folder)
             if os.path.realpath(target) == os.path.realpath(LIB):
                 return self._send(200, {"ok": True, "same": True})
             if os.path.exists(os.path.join(target, "index.sqlite")):  # a library already there: read that one
                 use_library_dir(target)
                 return self._send(200, {"ok": True, "existing": True})
-            started = start_job("library-move", "Moving the library", move_worker, target)
+            started = start_job("library-move", "正在移动知识库", move_worker, target)
             return self._send(200 if started else 409, {"ok": started})
         if url.path == "/api/myfiles/folder":  # look for the person's files in another folder
             folder = os.path.abspath(os.path.expanduser(str(body.get("folder") or "")))
@@ -1840,14 +1847,14 @@ class Handler(BaseHTTPRequestHandler):
             real = os.path.realpath(folder)
             lib_real = os.path.realpath(LIB)
             if not problem and (real == lib_real or real.startswith(lib_real + os.sep)):
-                problem = "That's inside the library folder, which a library update replaces. Pick another folder."
+                problem = "那个文件夹在知识库里面，而知识库更新会替换整个文件夹。请换一个文件夹。"
             elif not problem and lib_real.startswith(real.rstrip(os.sep) + os.sep):
-                problem = ("That folder holds the library, so its articles would count as your files. Pick a folder "
-                           "inside it, or another one.")
+                problem = ("那个文件夹就是知识库所在，里面的文章会被当成你的文件。请选它里面的一个子文件夹，"
+                           "或者换一个文件夹。")
             if problem:
                 return self._send(400, {"error": problem})
             if myfiles.progress.get("busy"):
-                return self._send(409, {"error": "Your files are still being read. Try again in a moment."})
+                return self._send(409, {"error": "还在读取你的文件，请稍后再试。"})
             use_files_dir(folder)
             return self._send(200, {"ok": True})
         if url.path == "/api/setup/retry":  # Try now / Try again
@@ -1865,7 +1872,7 @@ class Handler(BaseHTTPRequestHandler):
             warm_model(model)
             return self._send(200, {"ok": True})
         if url.path == "/api/engine":
-            started = start_job("engine", "AI engine (Ollama)", engine_worker)
+            started = start_job("engine", "AI 引擎 (Ollama)", engine_worker)
             return self._send(200 if started else 409, {"ok": started})
         if url.path == "/api/start-ollama":
             ollama_started_at[0] = 0
@@ -1877,7 +1884,7 @@ class Handler(BaseHTTPRequestHandler):
                 busy = [j["label"] for j in downloads.values()
                         if j["status"] in ("starting", "downloading", "unpacking") and j["key"] != "app-update"]
             if busy:  # updating restarts the app, which would cut it short
-                return self._send(409, {"error": f"Wait until {busy[0]} has finished, then update."})
+                return self._send(409, {"error": f"请等 {busy[0]} 完成后，再更新。"})
             started = bool(app) and start_job("app-update", f"Survival LLM {app['version']}", app_update_worker)
             return self._send(200 if started else 409, {"ok": started})
         if url.path == "/api/quit":
@@ -1892,7 +1899,7 @@ class Handler(BaseHTTPRequestHandler):
         except ConnectionError:  # the page went away mid-upload
             return None
         except OSError as exc:
-            return self._send(500, {"error": f"Couldn't save this file ({exc.strerror or exc})."})
+            return self._send(500, {"error": f"这个文件保存失败（{exc.strerror or exc}）。"})
 
     def _save_file(self, url):
         """Save an uploaded file into their folder. ?replace=<name> makes it the new version of that file (the old one
@@ -1903,14 +1910,14 @@ class Handler(BaseHTTPRequestHandler):
         name = safe_name(query.get("name", [""])[0])
         old = my_file_path(query["replace"][0]) if query.get("replace") else None
         if query.get("replace") and not old:
-            return self._send(404, {"error": "The file you're updating isn't in the folder any more. Add this one instead."})
+            return self._send(404, {"error": "你要更新的那个文件已经不在文件夹里了。请改为添加这个文件。"})
         size = int(self.headers.get("Content-Length") or 0)
         if os.path.splitext(name)[1].lower() not in myfiles.KINDS:
             return self._send(400, {"error": myfiles.CANT_READ})
         if size > MAX_UPLOAD:
-            return self._send(413, {"error": "This file is too big (over 4 GB)."})
+            return self._send(413, {"error": "这个文件太大（超过 4 GB）。"})
         if size + 1e9 > disk_free_bytes(MY_DIR):
-            return self._send(507, {"error": "There isn't enough free disk space for this file."})
+            return self._send(507, {"error": "可用磁盘空间不够放这个文件。"})
         os.makedirs(MY_DIR, exist_ok=True)
         part = os.path.join(MY_DIR, f".{uuid.uuid4().hex}.part")
         try:
@@ -1929,7 +1936,7 @@ class Handler(BaseHTTPRequestHandler):
                 if os.path.getsize(dest) == size and filecmp.cmp(dest, part, shallow=False):
                     return self._send(200, {"ok": True, "name": name, "duplicate": True})  # the same file again
                 if not old and query.get("keep", [""])[0] != "1":
-                    return self._send(409, {"error": f"You already have a file called {name}.", "name": name})
+                    return self._send(409, {"error": f"你已经有一个叫 {name} 的文件了。", "name": name})
                 stem, ext = os.path.splitext(name)
                 n = 2
                 while os.path.exists(dest):
@@ -1939,8 +1946,8 @@ class Handler(BaseHTTPRequestHandler):
                 try:
                     to_trash(old)
                 except Exception:
-                    return self._send(500, {"error": "Couldn't move the old version to the "
-                                                     + ("Recycle Bin." if os.name == "nt" else "Trash.")})
+                    return self._send(500, {"error": "无法把旧版本移到"
+                                                     + ("回收站。" if os.name == "nt" else "废纸篓。")})
             os.replace(part, dest)
         finally:
             if os.path.exists(part):
@@ -2047,7 +2054,7 @@ def ensure_webview2():
         if webview2_ready():
             return True
         if os.path.exists(WEBVIEW2_SETUP):
-            print("Installing Microsoft WebView2, which the app window needs.", flush=True)
+            print("正在安装应用窗口需要的 Microsoft WebView2。", flush=True)
             subprocess.run([WEBVIEW2_SETUP, "/install"], timeout=900)  # shows Microsoft's own progress window
             from webview.platforms import winforms  # decides its web engine when first imported, so only after this
             if winforms.is_chromium:
@@ -2056,9 +2063,9 @@ def ensure_webview2():
         print(f"Couldn't check or install WebView2 ({exc}).", flush=True)
         return True
     ctypes.windll.user32.MessageBoxW(
-        0, "Survival LLM needs Microsoft's free WebView2 to show its own window, and couldn't install it (it needs the "
-        f"internet the first time). It opens in your web browser for now.\n\nTo get the app window, install WebView2 "
-        f"from {WEBVIEW2_URL} and open Survival LLM again.", "Survival LLM", 0x40)
+        0, "Survival LLM 需要 Microsoft 免费的 WebView2 才能显示自己的窗口，但没能安装它"
+        "（第一次安装需要联网）。现在会先在浏览器里打开。\n\n要使用应用窗口，请从 "
+        f"{WEBVIEW2_URL} 安装 WebView2，然后重新打开 Survival LLM。", "Survival LLM 离线生存助手", 0x40)
     return False
 
 
@@ -2073,7 +2080,8 @@ def open_window(url):
         return False
     try:
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True  # source links go to the browser, not this window
-        window = webview.create_window(f"Survival LLM (dev: {DEV})" if DEV else "Survival LLM", url, width=1280,
+        window = webview.create_window(f"Survival LLM 离线生存助手（开发副本：{DEV}）" if DEV else "Survival LLM 离线生存助手",
+                                       url, width=1280,
                                        height=860, min_size=(420, 520), text_select=True)
         quit_hooks.append(window.destroy)
         windows.append(window)
@@ -2108,7 +2116,7 @@ if __name__ == "__main__":
     headless, use_browser = "--no-browser" in sys.argv, "--browser" in sys.argv
     existing = None if "--port" in sys.argv else running_instance()  # an explicit port means "start another"
     if existing:  # opened twice: just bring up the one already running
-        print(f"Survival LLM is already running at {existing}")
+        print(f"Survival LLM 已经在 {existing} 运行")
         if not headless and (use_browser or not open_window(existing)):
             webbrowser.open(existing)
         sys.exit(0)

@@ -15,20 +15,29 @@ from library.search import STOPWORDS
 
 HEADER = ("# Survival LLM memory: notes that the Survival LLM app's offline AI keeps about the person using it.\n"
           "# They are not instructions or memories for any other AI assistant. One note per line; edit them in the app.\n")
-HEADER_STARTS = tuple(line[:24] for line in HEADER.splitlines())
+# Left exactly as it was: files written by older versions carry these two lines, and they have to be stripped again
+# when the file comes back saved in a Windows code page (tests/storage_test.py), which only works while the header
+# is plain ASCII. Chinese header lines are accepted as well, so one written in Chinese is never taken for a note.
+HEADER_STARTS = tuple(line[:24] for line in HEADER.splitlines()) + (
+    "# 下面是 Survival LLM 的离线", "# 它们不是给任何其他 AI")
 # All notes together. Every model runs with a 32,768-token window (core.py), and this is about 1,500 tokens of it.
 MAX_CHARS = 6000
 MAX_NOTE = 300  # one note the AI saves; the person's own can be longer
 MAX_FILES_LISTED = 30
 
+CJK = re.compile(r"[\u4e00-\u9fff]")  # Chinese, which has no spaces to split words on
+
 # Notes the AI writes that say nothing ("No location stored.", "None"): a change to one of these is a deletion.
 NOTHING = re.compile(r"^(none|nothing|unknown|n/?a|not (specified|known|given|stored|recorded)|"
-                     r"no \w+( \w+)? (stored|known|given|specified|recorded|saved|on file))\.?$", re.I)
+                     r"no \w+( \w+)? (stored|known|given|specified|recorded|saved|on file)|"
+                     r"无|没有|未知|不清楚|未记录|暂无|未说明)(?:\.|。)?$", re.I)
 QUESTION = re.compile(r"^(asked|asks|is asking|wants to know|wanted to know) (about|how|what|whether|if|why|when|where|"
-                      r"which)\b|\bquestions? (about|on)\b", re.I)  # what they asked, not a fact about them
+                      r"which)\b|\bquestions? (about|on)\b|^(问|想知道|想了解|询问)", re.I)  # what they asked, not a fact about them
 # Something true only today ("has a rash on her arms now"): the rules say to leave those out, and models still don't.
-TODAY = re.compile(r"\b(right now|now|today|tonight|this (morning|afternoon|evening|week)|currently|at the moment)\W*$", re.I)
-WHO = re.compile(r"^(the )?(user|person)(\s+(is|has|was|had|lives|takes|uses|owns)\b|'s\s+|\s+)", re.I)
+TODAY = re.compile(r"\b(right now|now|today|tonight|this (morning|afternoon|evening|week)|currently|at the moment)\W*$"
+                   r"|(?:现在|今天|今晚|目前|这几天|正在)\W*$", re.I)
+WHO = re.compile(r"^(the )?(user|person)(\s+(is|has|was|had|lives|takes|uses|owns)\b|'s\s+|\s+)"
+                 r"|^(用户|使用者|他|她)(的|是|有)", re.I)
 
 
 def clean(note):
@@ -42,7 +51,8 @@ def clean(note):
 
 # What is wrong today, which a trailing "now" leaves true only today ("Has a rash on her arms now.").
 SYMPTOM = re.compile(r"\b(rash|fever|pain|hurts?|aches?|sick|ill|bleed\w*|cough\w*|vomit\w*|headache|earache|sore|cold|flu|"
-                     r"swollen|itch\w*|dizzy|nause\w*|diarrh\w*|cramp\w*|burn(?:ed|t)?|cut|injur\w*|scared|tired)\b", re.I)
+                     r"swollen|itch\w*|dizzy|nause\w*|diarrh\w*|cramp\w*|burn(?:ed|t)?|cut|injur\w*|scared|tired)\b|"
+                     r"发烧|发热|疼痛|咳嗽|呕吐|腹泻|皮疹|头疼|头痛|出血|晕|发冷|瘙痒|肿胀", re.I)
 
 
 def tidy(note):
@@ -110,7 +120,12 @@ def _write_file(path, text):
 
 
 def _words(text):
-    return {w for w in re.findall(r"[a-z0-9]+", text.lower()) if w not in STOPWORDS}
+    """What two notes are compared by. Chinese has no spaces, so runs of Chinese characters are added as
+    two-character pieces (they overlap: "我儿子" gives 我儿 and 儿子)."""
+    words = {w for w in re.findall(r"[a-z0-9]+", str(text).lower()) if w not in STOPWORDS}
+    for run in re.findall(r"[\u4e00-\u9fff]{2,}", str(text)):
+        words |= {run[i:i + 2] for i in range(len(run) - 1)}
+    return words
 
 
 def _overlap(a, b):
@@ -167,14 +182,17 @@ FORGET_ASK = re.compile(_LEAD + r"(?:forget\b(?!\s+(?:it|that|about it)\W*$)|sto
                         r"(?:delete|erase|remove|drop|wipe|clear|get rid of)\b(?=[^.?!]{0,80}?(?:\b(?:from|in|out of)\s+"
                         r"(?:(?:your|the|my)\s+)?(?:notes?|memory|memories)\b(?!\s*(?:foam|cards?|sticks?|chips?|loss))|"
                         r"\b(?:the|that|this|your|those|these|my)\s+(?:(?!(?:and|then|or|but|to)\b)[\w'’-]+\s+){0,3}?notes?\b"
-                        r"(?!\s+(?:the|any|a|an|how|if|whether|what|when|where|down|its?|their|his|her)\b))))", re.I)
+                        r"(?!\s+(?:the|any|a|an|how|if|whether|what|when|where|down|its?|their|his|her)\b))))"
+                        r"|(?:忘记|忘掉|别记|不要记|删掉|删除|清除|清掉)(?:这条|那一条|这个|那个)?", re.I)
 REMEMBER_ASK = re.compile(_LEAD + r"(?:remember|keep in mind|note that|note:|note\s+(?-i:[A-Z])|do not forget|"
                           r"don['’]?t forget|never forget|(?:make|keep) (?:a )?note (?:that|of)|take note(?: that|\s*:)|"
                           r"add (?:(?:this|that|it)\s+)?to your (?:notes?|memory)|"
                           r"(?:write|jot) (?:(?:this|that|it)\s+)?down(?:\s+that|\s*:)|"
                           r"save\b(?=\s+(?:this|that)\b(?!\s+(?:or|and)\b)|[^.?!]{0,80}?\b(?:to|in|into)\s+(?:your\s+)?"
-                          r"(?:memory|notes?)\b))", re.I)
-NEGATED = re.compile(r"\b(no|not|never|none|nothing|without|unknown|mentioned)\b|n['’]t\b|\bno longer\b", re.I)
+                          r"(?:memory|notes?)\b))"
+                          r"|(?:记住|记一下|帮我记|记着|别忘了|写下来|加进记忆|加入记忆|记到记忆里)", re.I)
+NEGATED = re.compile(r"\b(no|not|never|none|nothing|without|unknown|mentioned)\b|n['’]t\b|\bno longer\b|"
+                     r"没有|不再|并非|从不|未", re.I)
 # A note saying they no longer have or take something: "Does not have a Honda EU2200i generator.", "Has no generator.",
 # "No longer takes warfarin." Never a rule about their health ("Can't take aspirin.", "Is not vaccinated against
 # tetanus."), and only counted when the old note said the same thing the other way round.
@@ -188,7 +206,7 @@ FORGET_WORDS = {"forget", "delete", "erase", "remove", "drop", "wipe", "stop", "
                 "anything", "about", "from", "your", "what", "that", "this", "those", "these", "mention", "part", "bit",
                 "thank", "thanks", "last", "first", "previou", "earlier", "just", "other", "message", "answer",
                 "question", "time", "now", "old", "clear", "rid"}
-CLAUSE = re.compile(r"[,;:]\s*|\.\s+|\s+(?:but|and|while|though|although|plus)\s+", re.I)
+CLAUSE = re.compile(r"[,;:]\s*|\.\s+|\s+(?:but|and|while|though|although|plus)\s+|[，；：。、]", re.I)
 
 
 def asked_memory(said):
@@ -199,7 +217,7 @@ def asked_memory(said):
 def _stems(text):
     """Content words, a plural s off ("lives" and "live"), and every number however short ("7", "10 mg")."""
     return {w[:-1] if len(w) > 3 and w.endswith("s") and not w[:-1].isdigit() else w
-            for w in _words(text) if len(w) >= 3 or any(c.isdigit() for c in w)}
+            for w in _words(text) if len(w) >= 3 or any(c.isdigit() for c in w) or CJK.search(w)}
 
 
 def _held(note):
@@ -211,7 +229,7 @@ def _held(note):
 def _named(said, found):
     """The words naming each thing they asked to forget: "Forget about my generator, I sold it" and "forget my
     generator I sold it" give [{"generator"}], "Forget the generator and the cats" [{"generator"}, {"cat"}]."""
-    named = re.split(r"[,.;!?\n]", said[found.end():], maxsplit=1)[0]
+    named = re.split(r"[,.;!?\n，。；！？、]", said[found.end():], maxsplit=1)[0]
     for cut in re.finditer(r"\s(?:i|we|he|she|they|it|its|but|because|since|so)(?:['’]\w+)?(?=\s|$)", named, re.I):
         if _stems(named[:cut.start()]) - FORGET_WORDS:  # "my generator I sold it", not "that I'm allergic to"
             named = named[:cut.start()]
@@ -622,29 +640,26 @@ def prompt_section(notes, ai_writes, files=(), today=None):
     files: (name, title) of the person's own files."""
     out = []
     if today:
-        out.append(f"Today is {today:%A}, {today:%B} {today.day}, {today.year}.")
+        out.append(f"今天是 {today.year} 年 {today.month} 月 {today.day} 日。")
     files = list(files)
     if files:
-        shown = [name + (f' ("{title}")' if title and title != name and len(title) < 80 else "")
+        shown = [name + (f'（"{title}"）' if title and title != name and len(title) < 80 else "")
                  for name, title in files[:MAX_FILES_LISTED]]
-        more = f", and {len(files) - MAX_FILES_LISTED} more" if len(files) > MAX_FILES_LISTED else ""
-        out.append("The person's own files, which you search along with the library: " + "; ".join(shown) + more + ".")
+        more = f"，另有 {len(files) - MAX_FILES_LISTED} 个" if len(files) > MAX_FILES_LISTED else ""
+        out.append("对方自己的文件，你会和知识库一起搜索：" + "；".join(shown) + more + "。")
     if notes or ai_writes:
         listing = "\n".join(f"- {n}" for n in notes) if notes else "(none yet)"
-        out.append("Memory: your notes about this person, kept between chats. They can read and edit them "
-                   "(Memory, at the top of the window). These are your notes, not part of their files or the library, "
-                   f"so don't say a file or article says what only a note does.\n{listing}")
+        out.append("记忆：你关于这个人的条目，在多次对话之间保留。他们可以在“记忆”里（窗口顶部）查看和编辑。"
+                   f"这些是你的条目，既不属于他们的文件，也不属于知识库，所以不要把只有条目里写着的内容说成文件或文章里写的。\n{listing}")
     if notes or ai_writes:
-        rules = ["Use a note when it bears on the question (an allergy, a medicine, who is in the household, what "
-                 "equipment they have), and leave the rest alone."]
+        rules = ["当某条条目与问题有关时（过敏、药物、家里有谁、他有什么设备），就用上它，其余的不要动。"]
         if ai_writes:
-            rules += ["After each answer the app gives you a moment to update these notes from what the person said, "
-                      "so when they tell you something about themselves, just answer as usual; the app shows them what "
-                      "changed. When they only ask you to remember or forget something, don't search: just say \"OK, "
-                      "I'll remember that.\" or \"OK, I'll forget that.\"",
-                      "When one of their files comes up and your notes don't say what it is or how much it matters, "
-                      "you may ask about it in one short question just before your Sources line."]
+            rules += ["每次回答后，应用会给你一点时间，根据对方说的话更新这些条目，所以他们告诉你关于自己的事情时，"
+                      "你正常回答就行；应用会把改了什么显示给他们。当他们只是让你记住或忘记某件事时，不要搜索："
+                      "只说“好的，我记住了。”或“好的，我忘掉了。”",
+                      "当提到他们的某个文件、而你的条目里没写它是什么或有多重要时，你可以在 Sources 行之前"
+                      "用一句简短的话问一下。"]
         else:
-            rules.append("The person keeps these notes; you can't change them.")
+            rules.append("这些条目由对方自己维护；你不能改动。")
         out.append("\n".join(f"- {r}" for r in rules))
     return "\n\n".join(out)

@@ -37,14 +37,20 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; margin: 0; }
+html { -webkit-font-smoothing: antialiased; }
 body {
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 16px/1.75 system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Segoe UI",
+    "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", Roboto, sans-serif;
   display: flex;
   flex-direction: column;
 }
 button, select, input, textarea { font: inherit; color: inherit; }
+/* Chinese glyphs are taller than Latin ones: give controls room so nothing gets clipped. */
+button, select { line-height: 1.5; }
+/* Short Chinese labels (适合本机 / 1.3 GB / 使用中) must never wrap mid-label. */
+.ghost, .primary, #send, .badge, .ob-size, .mr-maker, .official, .dev-badge { white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 /* header */
@@ -164,6 +170,7 @@ body.onboarding #composer { display: none; }
 .activity div { padding: 1px 0; }
 
 .answer h3, .answer h4, .answer h5, .answer h6 { margin: 14px 0 4px; font-size: 16px; }
+.answer, .reader-body { line-height: 1.8; }
 .answer p { margin: 0 0 10px; }
 .answer ul, .answer ol { margin: 0 0 10px; padding-left: 24px; }
 .answer li { margin: 2px 0; }
@@ -224,6 +231,7 @@ textarea:focus { border-color: var(--accent); }
 .r-snip { font-size: 14px; color: var(--muted); }
 
 /* model choice */
+.model-btn { white-space: normal; }  /* a model name can be long: let it wrap rather than overflow */
 .model-btn strong { font-weight: 650; }
 .using { color: var(--text) !important; background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
   padding: 10px 14px; }
@@ -330,7 +338,8 @@ a:focus-visible, button:focus-visible, select:focus-visible, summary:focus-visib
 /* memory: the AI's notes about the person */
 .switch { display: flex; align-items: center; gap: 8px; margin: 12px 0 10px; font-weight: 600; cursor: pointer; }
 .switch input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
-.memory-text { min-height: 40vh; font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.memory-text { min-height: 40vh; font: 15px/1.8 system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Segoe UI",
+  "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", Roboto, sans-serif; }
 #memory-dialog .prompt-actions { flex-wrap: wrap; }
 #memory-dialog .prompt-actions #memory-count { margin-right: 0; }
 .memory-saved { font-size: 14px; color: var(--muted); margin-top: 8px; overflow-wrap: anywhere; }
