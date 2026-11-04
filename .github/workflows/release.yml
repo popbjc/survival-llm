@@ -100,6 +100,12 @@ jobs:
           unzip -p dist/Survival-LLM-mac.zip 'Survival LLM.app/Contents/Resources/app/version.txt' | grep -qx "$version" \
             || { echo "::error::version.txt inside the app does not match packaging/VERSION ($version)"; exit 1; }
 
+          # The app must carry its icon: the .icns next to the app code, and the Info.plist key that points to it.
+          unzip -l dist/Survival-LLM-mac.zip | grep -q 'Resources/AppIcon.icns' \
+            || { echo "::error::the Mac zip has no AppIcon.icns"; exit 1; }
+          unzip -p dist/Survival-LLM-mac.zip 'Survival LLM.app/Contents/Info.plist' | grep -q 'CFBundleIconFile' \
+            || { echo "::error::Info.plist does not reference the icon"; exit 1; }
+
           # The 简体中文 build must actually carry the Chinese UI and prompts, and must still carry the English
           # machine labels the app matches on (Sources: is what the citation check and six tests key off).
           unzip -p dist/Survival-LLM-mac.zip 'Survival LLM.app/Contents/Resources/app/app/static/index.html' \
