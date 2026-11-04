@@ -8,11 +8,11 @@
  "mac": {
   "url": "https://github.com/popbjc/survival-llm/releases/download/v0.4.2-zh/Survival-LLM-mac.zip",
   "bytes": 218126952,
-  "sha256": "2d1721a8d4b0126a8a017c0fa958320209dce98aa8f798be00ab52e797712edb"
+  "sha256": "7453aa57c743ac8cade7f4769abc657eb28e72035f2f940f35ea0c6045575362"
  },
  "windows": {
   "url": "https://github.com/popbjc/survival-llm/releases/download/v0.4.2-zh/Survival-LLM-windows.zip",
   "bytes": 27034527,
-  "sha256": "90ace5c554bec5f85b58ebefc3114118ede64b6611d7a9c179bca2f1cd795b89"
+  "sha256": "daf3b1f39bcce1e188c47f58d41b7002c03f4120a037e979a528e226cb985969"
  }
 }
