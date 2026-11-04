@@ -1,17 +1,18 @@
 {
- "version": "0.4.1",
- "date": "2026-10-29",
+ "version": "0.4.2",
+ "date": "2026-11-04",
  "notes": [
-  "Windows: on a PC without Microsoft's WebView2, the app now installs it, so it opens in its own window instead of as a broken page."
+  "Mac 应用有了自己的图标（一盏提灯），Finder 与程序坞不再显示默认图标。",
+  "更新检查与知识库清单改为从本仓库（popbjc/survival-llm）获取，不再依赖原上游页面。"
  ],
  "mac": {
-  "url": "https://github.com/anonnerdfrenzy/survival-llm/releases/download/v0.4.1/Survival-LLM-mac.zip",
-  "bytes": 212834009,
-  "sha256": "b1a602f3e46fd15d26122a7d5608d24fc34081c385ab901d0e01a3f5306098bc"
+  "url": "https://github.com/popbjc/survival-llm/releases/download/v0.4.2-zh/Survival-LLM-mac.zip",
+  "bytes": 218126952,
+  "sha256": "2d1721a8d4b0126a8a017c0fa958320209dce98aa8f798be00ab52e797712edb"
  },
  "windows": {
-  "url": "https://github.com/anonnerdfrenzy/survival-llm/releases/download/v0.4.1/Survival-LLM-windows.zip",
-  "bytes": 27025555,
-  "sha256": "3472ce6b4ed13e63b1693622b98078e8a4c01f824326546fb5f7eaa103f9265d"
+  "url": "https://github.com/popbjc/survival-llm/releases/download/v0.4.2-zh/Survival-LLM-windows.zip",
+  "bytes": 27034527,
+  "sha256": "90ace5c554bec5f85b58ebefc3114118ede64b6611d7a9c179bca2f1cd795b89"
  }
 }
