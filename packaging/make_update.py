@@ -13,7 +13,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
-RELEASES = "https://github.com/anonnerdfrenzy/survival-llm/releases/download"
+RELEASES = "https://github.com/popbjc/survival-llm/releases/download"
 
 version = open(os.path.join(HERE, "VERSION")).read().strip()
 update = {"version": version, "date": datetime.date.today().isoformat(), "notes": sys.argv[1:]}

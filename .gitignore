@@ -5,4 +5,3 @@ library.noindex/
 dist/
 packaging/cache/
 .DS_Store
-.tmp-run/

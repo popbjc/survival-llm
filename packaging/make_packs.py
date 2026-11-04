@@ -1,7 +1,7 @@
 """Zip built library folders into release parts and write the manifest the app downloads from.
 
 Usage: python3 packaging/make_packs.py --base-url URL [--part-mb 1900] [--version YYYY-MM-DD] [--notes TEXT] ID=DIR [ID=DIR ...]
-  e.g. --base-url https://github.com/anonnerdfrenzy/survival-llm/releases/download/v0.1.0 \
+  e.g. --base-url https://github.com/popbjc/survival-llm/releases/download/v0.1.0 \
        lite=dist/library-lite full=dist/library-full
 Each DIR holds index.sqlite and text/ (built with LIBRARY_OUT=DIR library/build_library.py --lite or --public).
 Writes dist/packs/library-<id>.zip.NNN parts and dist/packs/library-packs.json; publish the parts in that release

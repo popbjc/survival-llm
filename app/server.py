@@ -98,7 +98,7 @@ DISK_MARGIN_GB = 5  # keep this much free after a download
 # Packs are zips of index.sqlite + text/, split into parts because GitHub caps release files at 2 GB.
 # It lives on the project's web page (not "latest release"), so app releases and library releases stay independent.
 MANIFEST_URL = os.environ.get("SURVIVAL_LLM_MANIFEST") or \
-    "https://anonnerdfrenzy.github.io/survival-llm/library-packs.json"
+    "https://popbjc.github.io/survival-llm/library-packs.json"
 
 if os.environ.get("SURVIVAL_LLM_APP_DIR"):  # another settings folder, such as the dev copy's (bin/dev)
     APP_DIR = os.environ["SURVIVAL_LLM_APP_DIR"]
@@ -131,8 +131,8 @@ my_files_checked = [0.0]  # when the folder was last looked at
 # Updates. Each release publishes update.json on the project's web page (packaging/make_update.py writes it):
 # {"version", "date", "notes": [...], "mac": {"url", "bytes", "sha256"}, "windows": {...}}. The app checks it once a
 # day while running (a plain request for a small file, nothing about the person) and when they press Check.
-UPDATES_URL = os.environ.get("SURVIVAL_LLM_UPDATES") or "https://anonnerdfrenzy.github.io/survival-llm/update.json"
-DOWNLOAD_PAGE = "https://www.brangus.io/survival-llm"
+UPDATES_URL = os.environ.get("SURVIVAL_LLM_UPDATES") or "https://popbjc.github.io/survival-llm/update.json"
+DOWNLOAD_PAGE = "https://github.com/popbjc/survival-llm"
 FIRST_PACKS = "2026-10-24"  # the library packs' version from before packs said which version they are
 UPDATE_FAILED = os.path.join(APP_DIR, "update-failed.txt")  # left by the Windows updater when it had to roll back
 updates = {"data": None, "checked": 0.0, "error": None}
